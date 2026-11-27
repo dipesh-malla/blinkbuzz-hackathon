@@ -11,7 +11,7 @@ export const demoEditions: Edition[] = [
     title: 'Edition 01',
     industry: null,
     problem: null,
-    audience: '+2 students (Grade 11 and 12), any stream',
+    audience: 'School and +2 students (Grade 9 to 12), any stream',
     venue: 'TechSpire College, Kathmandu',
     starts_at: null,
     ends_at: null,
@@ -104,7 +104,7 @@ export const demoFaqs: Faq[] = [
     id: 'f1',
     question: 'Who can take part?',
     answer:
-      'Edition 01 is for +2 students in Grade 11 or 12, from any stream. Later editions open to bachelor students, each with its own industry problem.',
+      'Edition 01 is for students in Grade 9 to 12, from any stream. Later editions open to bachelor students, each with its own industry problem.',
     sort: 1,
   },
   {
@@ -139,7 +139,7 @@ export const demoFaqs: Faq[] = [
     id: 'f6',
     question: 'Why is a guardian contact needed?',
     answer:
-      'Most +2 students are under 18, so we ask for a parent or guardian who agrees to your participation and can be reached on the day.',
+      'Most school and +2 students are under 18, so we ask for a parent or guardian who agrees to your participation and can be reached on the day.',
     sort: 6,
   },
 ];

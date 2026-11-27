@@ -45,15 +45,46 @@ export async function getSettings(): Promise<Settings> {
   return out as Settings;
 }
 
+const wait = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+/** A random UUID v4, also on older browsers without crypto.randomUUID. */
+export function newId(): string {
+  const c: Crypto = globalThis.crypto;
+  if (typeof c.randomUUID === 'function') return c.randomUUID();
+  const b = c.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+/**
+ * Saves a registration in one go, even on a shaky connection.
+ * The row gets its id here in the browser, so if a request times out after
+ * the server already saved it, the retry hits "already exists" and is
+ * treated as success: never a lost registration, never a duplicate.
+ */
 export async function submitRegistration(r: Registration): Promise<void> {
   if (isDemo || !supabase) {
     // Preview mode: pretend to save so the flow can be tested.
-    await new Promise((res) => setTimeout(res, 700));
+    await wait(700);
     console.info('[demo] registration', r);
     return;
   }
-  const { error } = await supabase.from('registrations').insert(r);
-  if (error) throw error;
+  const row = { ...r, id: r.id ?? newId() };
+  let last = 'Something went wrong. Please try again.';
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    const { error, status } = await supabase.from('registrations').insert(row);
+    if (!error) return;
+    if (error.code === '23505') return; // saved by an earlier attempt
+    // retry only what a retry can fix: no connection, timeouts, server hiccups
+    const retryable = status === 0 || status === 408 || status === 429 || status >= 500;
+    if (error.code === '42501') last = 'Registration for this edition is closed.';
+    else last = retryable ? 'The connection dropped. Please check your internet and press Submit again.' : error.message;
+    if (!retryable || attempt === 4) break;
+    await wait(600 * attempt);
+  }
+  throw new Error(last);
 }
 
 export function youtubeId(url: string): string | null {

@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { View } from '@react-three/drei';
 import Terrain from '../components/three/Terrain';
 import Stepper, { Step } from '../components/reactbits/Stepper';
 import { Arrow, Fact, useReveal } from '../components/ui';
 import { useSite } from '../lib/store';
-import { feeLabel, submitRegistration, teamLabel } from '../lib/data';
+import { feeLabel, newId, submitRegistration, teamLabel } from '../lib/data';
 import { useMediaQuery, usePalette } from '../hooks/usePalette';
 import type { Member, Registration } from '../lib/types';
 
@@ -49,6 +49,8 @@ export default function Register({ gl }: { gl: boolean }) {
   const [step, setStep] = useState(1);
   const [tried, setTried] = useState(false);
   const [sending, setSending] = useState(false);
+  // one id per registration: pressing Submit again after a dropped connection can't create a duplicate
+  const regId = useRef<string>(newId());
   const [sendError, setSendError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
 
@@ -123,11 +125,11 @@ export default function Register({ gl }: { gl: boolean }) {
       setStep(step + 1);
       return;
     }
-    if (!e) return;
+    if (!e || sending) return;
     setSending(true);
     setSendError(null);
     try {
-      await submitRegistration({ ...d, edition_id: e.id, team_name: isTeam ? d.team_name : d.members[0].name });
+      await submitRegistration({ ...d, id: regId.current, edition_id: e.id, team_name: isTeam ? d.team_name : d.members[0].name });
       setDone(true);
       setStep(5);
       try {
@@ -267,6 +269,8 @@ export default function Register({ gl }: { gl: boolean }) {
                           <Field label="Grade" error={err(`m${i}grade`)}>
                             <select className="field" value={m.grade} aria-invalid={!!err(`m${i}grade`)} onChange={(x) => setMember(i, { grade: x.target.value })}>
                               <option value="">Select</option>
+                              <option>Grade 9</option>
+                              <option>Grade 10</option>
                               <option>Grade 11</option>
                               <option>Grade 12</option>
                             </select>
@@ -334,7 +338,7 @@ export default function Register({ gl }: { gl: boolean }) {
                   <div className="flex items-center gap-4">
                     {tried && !stepValid(step) && <span className="hidden text-[13px] text-[#ff6b6b] sm:inline">Check the fields above.</span>}
                     <button className="btn btn-primary" onClick={next} disabled={sending}>
-                      {step < 4 ? 'Continue' : sending ? 'Sending…' : 'Submit registration'} <Arrow />
+                      {step < 4 ? 'Continue' : sending ? 'Saving…' : 'Submit registration'} <Arrow />
                     </button>
                   </div>
                 </div>

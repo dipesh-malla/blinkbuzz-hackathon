@@ -160,7 +160,7 @@ create policy "media admin delete" on storage.objects for delete using (bucket_i
 -- ════════════════════════════════════════════════════════════════
 insert into public.editions (slug, number, title, audience, venue, registration_open, status, team_min, team_max, fee_npr, timeline, is_current)
 values (
-  'edition-01', 1, 'Edition 01', '+2 students (Grade 11 and 12), any stream', 'TechSpire College, Kathmandu',
+  'edition-01', 1, 'Edition 01', 'School and +2 students (Grade 9 to 12), any stream', 'TechSpire College, Kathmandu',
   true, 'upcoming', 2, 4, 0,
   '[{"date":"TBA","label":"Registration opens"},{"date":"TBA","label":"Industry problem revealed"},{"date":"TBA","label":"Hack day at TechSpire College"},{"date":"TBA","label":"Demos, judging and awards"}]',
   true
@@ -176,12 +176,12 @@ on conflict (key) do nothing;
 
 insert into public.faqs (question, answer, sort)
 select * from (values
-  ('Who can take part?', 'Edition 01 is for +2 students in Grade 11 or 12, from any stream. Later editions open to bachelor students, each with its own industry problem.', 1),
+  ('Who can take part?', 'Edition 01 is for students in Grade 9 to 12, from any stream. Later editions open to bachelor students, each with its own industry problem.', 1),
   ('Do I need to know how to code?', 'One person on the team who can build is enough. Research, design and the final pitch matter as much as the code.', 2),
   ('How big is a team?', 'Team size is shown in the edition details and on the form. You can register as a team, and we help solo students find one.', 3),
   ('When do we see the problem?', 'The industry and the problem statement are revealed on the date in the timeline, so every team starts from the same point.', 4),
   ('What should we bring?', 'A charged laptop per team, chargers and your student ID. Food, water, power and Wi-Fi are on us.', 5),
-  ('Why is a guardian contact needed?', 'Most +2 students are under 18, so we ask for a parent or guardian who agrees to your participation and can be reached on the day.', 6)
+  ('Why is a guardian contact needed?', 'Most school and +2 students are under 18, so we ask for a parent or guardian who agrees to your participation and can be reached on the day.', 6)
 ) v(question, answer, sort)
 where not exists (select 1 from public.faqs);
 

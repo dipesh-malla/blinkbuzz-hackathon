@@ -1,12 +1,18 @@
 import { useRef, useState } from 'react';
 import type { Edition, Media } from '../../lib/types';
 import { youtubeId } from '../../lib/data';
-import { deleteRow, ErrorLine, F, Panel, saveRow, uploadFile, useTable } from './kit';
+import { deleteRow, ErrorLine, F, Panel, removeStoredFile, saveRow, uploadFile, useTable } from './kit';
 
 // Shrinks photos in the browser before upload (keeps the free storage tier lean).
 async function shrink(file: File, max = 1800): Promise<File> {
   if (!file.type.startsWith('image/') || file.type === 'image/gif' || file.type === 'image/svg+xml') return file;
-  const img = await createImageBitmap(file);
+  let img: ImageBitmap;
+  try {
+    img = await createImageBitmap(file);
+  } catch {
+    if (/heic|heif/i.test(file.type) || /\.hei[cf]$/i.test(file.name)) throw new Error(`${file.name} is a HEIC photo, which browsers can't show. Export it as JPG first (Photos → File → Export).`);
+    return file;
+  }
   const k = Math.min(1, max / Math.max(img.width, img.height));
   const c = document.createElement('canvas');
   c.width = Math.round(img.width * k);
@@ -17,7 +23,8 @@ async function shrink(file: File, max = 1800): Promise<File> {
 }
 
 export default function MediaAdmin() {
-  const { rows, refresh, error } = useTable<Media>('media');
+  const { rows, setRows, refresh, error } = useTable<Media>('media');
+  const [removing, setRemoving] = useState<string | null>(null);
   const { rows: editions } = useTable<Edition>('editions', 'number');
   const [edition, setEdition] = useState('');
   const [video, setVideo] = useState('');
@@ -45,6 +52,7 @@ export default function MediaAdmin() {
       try {
         const url = await uploadFile(await shrink(f), `gallery/${ed}`);
         await saveRow('media', { edition_id: ed, kind: 'image', url, alt: f.name.replace(/\.\w+$/, '').replace(/[-_]/g, ' '), sort: rows.length + n });
+        refresh(); // show each photo as soon as it lands
       } catch (x) {
         failed++;
         setPhotoMsg((x as Error).message);
@@ -155,14 +163,24 @@ export default function MediaAdmin() {
                 <img src={yt ? `https://i.ytimg.com/vi/${yt}/hqdefault.jpg` : m.url} alt={m.alt} className="h-full w-full object-cover" loading="lazy" />
                 {yt && <span className="absolute left-2 top-2 rounded bg-black/70 px-1.5 py-0.5 text-[11px] text-white">Video</span>}
                 <button
-                  className="absolute inset-x-2 bottom-2 rounded-lg bg-black/75 py-1.5 text-[13px] text-white opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100"
+                  className="absolute inset-x-2 bottom-2 rounded-lg bg-black/75 py-1.5 text-[13px] text-white opacity-100 transition-opacity disabled:opacity-60 md:opacity-0 md:group-hover:opacity-100"
+                  disabled={removing === m.id}
                   onClick={async () => {
                     if (!confirm('Remove this item from the gallery?')) return;
-                    await deleteRow('media', m.id).catch((x) => setPhotoMsg(x.message));
-                    refresh();
+                    setRemoving(m.id);
+                    try {
+                      await deleteRow('media', m.id);
+                      setRows((r) => r.filter((x) => x.id !== m.id)); // gone at once, one click
+                      if (m.kind === 'image') removeStoredFile(m.url).catch(() => {}); // free the storage too
+                      refresh();
+                    } catch (x) {
+                      setPhotoMsg((x as Error).message);
+                    } finally {
+                      setRemoving(null);
+                    }
                   }}
                 >
-                  Remove
+                  {removing === m.id ? 'Removing…' : 'Remove'}
                 </button>
               </div>
             );

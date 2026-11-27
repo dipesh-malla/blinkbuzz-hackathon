@@ -22,7 +22,7 @@ export function useTable<T>(table: string, order = 'sort') {
     await load();
     reloadSite();
   };
-  return { rows, loading, error, refresh, setError };
+  return { rows, setRows, loading, error, refresh, setError };
 }
 
 export async function saveRow(table: string, row: Record<string, unknown>) {
@@ -32,9 +32,19 @@ export async function saveRow(table: string, row: Record<string, unknown>) {
   if (error) throw error;
 }
 
+/** Deletes one row and confirms it is gone (an empty result means nothing was deleted). */
 export async function deleteRow(table: string, id: string) {
-  const { error } = await supabase!.from(table).delete().eq('id', id);
+  const { data, error } = await supabase!.from(table).delete().eq('id', id).select('id');
   if (error) throw error;
+  if (!data?.length) throw new Error('Nothing was deleted. Your login may have expired: sign out and in again.');
+}
+
+/** Removes a file we uploaded to our own storage bucket (ignored for outside links). */
+export async function removeStoredFile(url: string) {
+  const marker = `/storage/v1/object/public/${MEDIA_BUCKET}/`;
+  const i = url.indexOf(marker);
+  if (i === -1) return;
+  await supabase!.storage.from(MEDIA_BUCKET).remove([decodeURIComponent(url.slice(i + marker.length))]);
 }
 
 export async function uploadFile(file: File, folder: string): Promise<string> {
