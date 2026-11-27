@@ -90,6 +90,7 @@ export type Settings = {
   brand?: string;
   headline?: string;
   tagline?: string;
+  galleryStyle?: string; // curved gallery preset id
   contactEmail?: string;
   sponsorEmail?: string;
 };

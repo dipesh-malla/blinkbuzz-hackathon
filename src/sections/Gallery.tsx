@@ -2,6 +2,7 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { gsap } from 'gsap';
 import { Flip } from 'gsap/Flip';
 import { Section } from '../components/ui';
+import CurvedGallery, { CURVE_MIN_PHOTOS, CURVE_PRESETS, presetById } from '../components/CurvedGallery';
 import { useSite } from '../lib/store';
 import { isDemo } from '../lib/supabase';
 import { youtubeId } from '../lib/data';
@@ -222,46 +223,113 @@ export function VideoGrid({ videos }: { videos: Media[] }) {
   );
 }
 
+function EditionSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { id: string; title: string; count: number }[] }) {
+  return (
+    <label className="glass relative flex h-11 items-center gap-2 rounded-full pl-4 pr-10 text-[14px]">
+      <span className="text-muted">Edition</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="focus-ring cursor-pointer appearance-none bg-transparent font-medium text-ink outline-none"
+        aria-label="Show photos from edition"
+      >
+        {options.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.title} ({o.count})
+          </option>
+        ))}
+      </select>
+      <svg viewBox="0 0 16 16" width="12" height="12" className="pointer-events-none absolute right-4 text-muted" aria-hidden>
+        <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </label>
+  );
+}
+
 export default function Gallery() {
-  const { media, editions } = useSite();
-  const withMedia = useMemo(() => editions.filter((e) => media.some((m) => m.edition_id === e.id)), [editions, media]);
+  const { media, editions, settings } = useSite();
+  const withMedia = useMemo(() => editions.filter((e) => media.some((m) => m.edition_id === e.id && m.kind === 'image')), [editions, media]);
   const [filter, setFilter] = useState<string>('all');
+  // default perspective comes from Admin → Settings; visitors can switch it (?gallery=deep previews one)
+  const initial = (typeof location !== 'undefined' && new URLSearchParams(location.search).get('gallery')) || settings.galleryStyle;
+  const [styleId, setStyleId] = useState<string>(presetById(initial).id);
+  const preset = presetById(styleId);
   const shown = media.filter((m) => filter === 'all' || m.edition_id === filter);
   const images = shown.filter((m) => m.kind === 'image');
   const videos = shown.filter((m) => m.kind === 'video');
+  const count = (id: string) => media.filter((m) => m.kind === 'image' && (id === 'all' || m.edition_id === id)).length;
+  const curved = images.length >= CURVE_MIN_PHOTOS;
+  const options = [{ id: 'all', title: 'All editions', count: count('all') }, ...withMedia.map((e) => ({ id: e.id, title: e.title, count: count(e.id) }))];
 
   return (
-    <Section id="gallery" tag="Gallery">
-      <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <h2 data-reveal className="h-section">
-          Photos and films <span className="text-muted">from every edition.</span>
-        </h2>
-        {withMedia.length > 1 && (
-          <div data-reveal className="flex flex-wrap gap-2" role="tablist" aria-label="Filter by edition">
-            {[{ id: 'all', title: 'All' }, ...withMedia].map((e) => (
-              <button
-                key={e.id}
-                role="tab"
-                aria-selected={filter === e.id}
-                onClick={() => setFilter(e.id)}
-                className={`focus-ring h-9 rounded-full border px-4 text-[14px] transition-colors ${filter === e.id ? 'border-ink bg-ink text-bg' : 'border-line text-muted hover:text-ink'}`}
-              >
-                {e.title}
-              </button>
-            ))}
+    <Section id="gallery" bare>
+      <div className="wrap">
+        <p className="tag mb-5" data-reveal>
+          Gallery
+        </p>
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <h2 data-reveal className="h-section">
+            Photos and films <span className="text-muted">from every edition.</span>
+          </h2>
+          {withMedia.length > 0 && (
+            <div data-reveal>
+              <EditionSelect value={filter} onChange={setFilter} options={options} />
+            </div>
+          )}
+        </div>
+        {isDemo && media.length > 0 && <p className="mt-4 font-mono text-[12px] text-muted">Demo artwork. Your event photos replace it once you upload them in Admin.</p>}
+
+        {/* perspective picker */}
+        {curved && (
+          <div data-reveal className="-mx-[var(--edge)] mt-10 overflow-x-auto px-[var(--edge)] pb-1 [scrollbar-width:none]">
+            <div className="flex min-w-max gap-2 lg:grid lg:min-w-0 lg:grid-cols-8" role="tablist" aria-label="Gallery perspective">
+              {CURVE_PRESETS.map((p, i) => {
+                const on = p.id === preset.id;
+                return (
+                  <button
+                    key={p.id}
+                    role="tab"
+                    aria-selected={on}
+                    onClick={() => setStyleId(p.id)}
+                    className={`focus-ring flex min-w-[112px] flex-col items-center justify-center gap-1 rounded-[14px] border px-3 py-3 transition-[border-color,background-color,box-shadow] duration-300 ${
+                      on ? 'border-accent bg-accent/10 shadow-[0_0_24px_-8px_var(--accent)]' : 'border-line bg-ink/[0.03] hover:border-ink/40'
+                    }`}
+                  >
+                    <span className={`font-mono text-[12px] ${on ? 'text-accent' : 'text-muted'}`}>{String(i + 1).padStart(2, '0')}</span>
+                    <span className={`whitespace-nowrap text-[14px] ${on ? 'text-ink' : 'text-ink/70'}`}>{p.label}</span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
       </div>
-      {isDemo && media.length > 0 && <p className="mt-4 font-mono text-[12px] text-muted">Demo artwork. Your event photos replace it once you upload them in Admin.</p>}
 
       {media.length === 0 ? (
-        <div data-reveal className="glass mt-12 grid min-h-[44svh] place-items-center rounded-[28px] p-8 text-center">
-          <p className="mx-auto max-w-[26ch] text-[clamp(24px,3vw,36px)] font-medium tracking-[-0.02em]">The first photos land here after hack day.</p>
+        <div className="wrap">
+          <div data-reveal className="glass mt-12 grid min-h-[44svh] place-items-center rounded-[28px] p-8 text-center">
+            <p className="mx-auto max-w-[26ch] text-[clamp(24px,3vw,36px)] font-medium tracking-[-0.02em]">The first photos land here after hack day.</p>
+          </div>
         </div>
       ) : (
-        <div className="mt-12 space-y-12">
-          {images.length > 0 && <FlipGallery images={images} />}
-          <VideoGrid videos={videos} />
+        <div className="mt-8 space-y-14">
+          {images.length > 0 &&
+            (curved ? (
+              // full bleed: edge to edge of the screen
+              <div data-reveal key={`${filter}-${preset.id}`}>
+                <CurvedGallery images={images} preset={preset} />
+              </div>
+            ) : (
+              // only a few photos: the framed grid reads better than a sparse curve
+              <div className="wrap" key={filter}>
+                <FlipGallery images={images} />
+              </div>
+            ))}
+          {videos.length > 0 && (
+            <div className="wrap">
+              <VideoGrid videos={videos} />
+            </div>
+          )}
         </div>
       )}
     </Section>

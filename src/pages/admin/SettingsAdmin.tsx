@@ -4,8 +4,9 @@ import { palettes, applyPalette } from '../../config/palettes';
 import { site } from '../../config/site';
 import { useSite } from '../../lib/store';
 import { ErrorLine, F, Panel } from './kit';
+import { CURVE_PRESETS } from '../../components/CurvedGallery';
 
-const keys = ['palette', 'brand', 'headline', 'tagline', 'contactEmail', 'sponsorEmail'] as const;
+const keys = ['palette', 'galleryStyle', 'brand', 'headline', 'tagline', 'contactEmail', 'sponsorEmail'] as const;
 
 export default function SettingsAdmin() {
   const { settings, reload } = useSite();
@@ -16,6 +17,7 @@ export default function SettingsAdmin() {
   useEffect(() => {
     setV({
       palette: settings.palette ?? site.palette,
+      galleryStyle: settings.galleryStyle ?? 'classic',
       brand: settings.brand ?? site.brand,
       headline: settings.headline ?? site.headline,
       tagline: settings.tagline ?? site.tagline,
@@ -57,6 +59,17 @@ export default function SettingsAdmin() {
           ))}
         </div>
         <p className="mt-3 text-[13px] text-muted">Click to preview. Save to publish it for every visitor. New palettes are added in src/config/palettes.ts.</p>
+        <div className="mt-6 border-t border-line pt-5">
+          <F label="Gallery: default perspective (visitors can still switch)">
+            <select className="field" value={v.galleryStyle ?? 'classic'} onChange={(e) => setV({ ...v, galleryStyle: e.target.value })}>
+              {CURVE_PRESETS.map((p, i) => (
+                <option key={p.id} value={p.id}>
+                  {String(i + 1).padStart(2, '0')} · {p.label}
+                </option>
+              ))}
+            </select>
+          </F>
+        </div>
       </Panel>
 
       <Panel title="Brand & contact">
