@@ -80,7 +80,7 @@ function Viewer({ images, index, onIndex, onClose, fromState }: { images: Media[
         src={m.url}
         alt={m.alt}
         onLoad={(e) => setAr(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight || 4 / 3)}
-        className="relative rounded-[20px] object-cover shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
+        className="relative rounded-[calc(20px*var(--rk))] object-cover shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
         style={{ width: w, height: Math.round(w / ar) }}
         onClick={onClose}
       />
@@ -290,7 +290,7 @@ export default function CurvedGallery({ images, preset }: { images: Media[]; pre
                 onClick={() => onCard(j)}
                 tabIndex={-1}
                 aria-hidden={j !== current}
-                className="absolute overflow-hidden rounded-[18px] border border-line bg-surface shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] [backface-visibility:hidden]"
+                className="absolute overflow-hidden rounded-[calc(18px*var(--rk))] border border-line bg-surface shadow-[0_30px_80px_-30px_rgba(0,0,0,0.85)] [backface-visibility:hidden]"
                 style={{ width: cw, height: ch, left: -cw / 2, top: -ch / 2, willChange: 'transform' }}
               >
                 {/* only photos near the centre load */}

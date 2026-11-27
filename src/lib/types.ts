@@ -95,6 +95,9 @@ export type Settings = {
   galleryStyle?: string; // curved gallery preset id
   contactEmail?: string;
   sponsorEmail?: string;
+  theme?: string; // JSON, see src/config/theme.ts
+  logoUrl?: string; // optional uploaded logo mark
+  savedPalettes?: string; // JSON list of the admin's own palettes
 };
 
 export type RequestTier = SponsorTier | 'not-sure';

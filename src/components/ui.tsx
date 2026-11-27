@@ -50,7 +50,7 @@ export function Section({
 }) {
   const ref = useReveal<HTMLElement>();
   return (
-    <section id={id} ref={ref} className={`relative ${tall ? 'min-h-[100svh]' : ''} py-[clamp(80px,12vh,140px)] ${className}`}>
+    <section id={id} ref={ref} className={`relative ${tall ? 'min-h-[100svh]' : ''} py-[var(--section-y)] ${className}`}>
       {bare ? (
         children
       ) : (

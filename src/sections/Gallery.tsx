@@ -107,10 +107,10 @@ export function FlipGallery({ images }: { images: Media[] }) {
     <>
       <ul className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4">
         {images.map((m, i) => (
-          <li key={m.id} data-reveal={i % 3} className="rounded-[22px] border border-dashed border-line p-2 transition-colors hover:border-accent/60 md:p-2.5">
+          <li key={m.id} data-reveal={i % 3} className="rounded-[calc(22px*var(--rk))] border border-dashed border-line p-2 transition-colors hover:border-accent/60 md:p-2.5">
             <button
               onClick={() => openAt(i)}
-              className="focus-ring group relative block aspect-square w-full overflow-hidden rounded-[16px] bg-surface"
+              className="focus-ring group relative block aspect-square w-full overflow-hidden rounded-[calc(16px*var(--rk))] bg-surface"
               aria-label={`Open photo ${i + 1} of ${images.length}${m.alt ? `: ${m.alt}` : ''}`}
             >
               <img
@@ -119,7 +119,7 @@ export function FlipGallery({ images }: { images: Media[] }) {
                 alt={m.alt}
                 loading="lazy"
                 onLoad={(e) => (aspects.current[m.id] = e.currentTarget.naturalWidth / e.currentTarget.naturalHeight)}
-                className="absolute inset-0 h-full w-full rounded-[16px] object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+                className="absolute inset-0 h-full w-full rounded-[calc(16px*var(--rk))] object-cover transition-transform duration-500 group-hover:scale-[1.03]"
                 style={{ visibility: open === i ? 'hidden' : 'visible' }}
               />
             </button>
@@ -135,7 +135,7 @@ export function FlipGallery({ images }: { images: Media[] }) {
             data-flip-id={`g-${cur.id}`}
             src={cur.url}
             alt={cur.alt}
-            className="relative rounded-[20px] object-cover shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
+            className="relative rounded-[calc(20px*var(--rk))] object-cover shadow-[0_40px_120px_-30px_rgba(0,0,0,0.9)]"
             style={{ width: mw, height: mh }}
             onClick={close}
           />
@@ -176,7 +176,7 @@ export function VideoModal({ id, onClose }: { id: string; onClose: () => void })
   }, [onClose]);
   return (
     <div className="fixed inset-0 z-[90] grid place-items-center bg-bg/85 p-4 backdrop-blur-xl" role="dialog" aria-modal onClick={onClose}>
-      <div className="relative aspect-video w-full max-w-5xl overflow-hidden rounded-[22px] bg-black" onClick={(e) => e.stopPropagation()}>
+      <div className="relative aspect-video w-full max-w-5xl overflow-hidden rounded-[calc(22px*var(--rk))] bg-black" onClick={(e) => e.stopPropagation()}>
         <iframe
           className="absolute inset-0 h-full w-full"
           src={`https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`}
@@ -205,7 +205,7 @@ export function VideoGrid({ videos }: { videos: Media[] }) {
             <button
               key={v.id}
               onClick={() => setPlaying(id)}
-              className="focus-ring card-lift group relative aspect-video overflow-hidden rounded-[22px] border border-line bg-surface text-left"
+              className="focus-ring card-lift group relative aspect-video overflow-hidden rounded-[calc(22px*var(--rk))] border border-line bg-surface text-left"
               aria-label={`Play video: ${v.alt || 'event video'}`}
             >
               <img src={`https://i.ytimg.com/vi/${id}/hqdefault.jpg`} alt="" loading="lazy" className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
@@ -304,7 +304,7 @@ export default function Gallery() {
                     role="tab"
                     aria-selected={on}
                     onClick={() => setStyleId(p.id)}
-                    className={`focus-ring flex min-w-[112px] flex-col items-center justify-center gap-1 rounded-[14px] border px-3 py-3 transition-[border-color,background-color,box-shadow] duration-300 ${
+                    className={`focus-ring flex min-w-[112px] flex-col items-center justify-center gap-1 rounded-[calc(14px*var(--rk))] border px-3 py-3 transition-[border-color,background-color,box-shadow] duration-300 ${
                       on ? 'border-accent bg-accent/10 shadow-[0_0_24px_-8px_var(--accent)]' : 'border-line bg-ink/[0.03] hover:border-ink/40'
                     }`}
                   >
@@ -320,7 +320,7 @@ export default function Gallery() {
 
       {images.length === 0 && videos.length === 0 ? (
         <div className="wrap">
-          <div data-reveal className="glass mt-12 grid min-h-[44svh] place-items-center rounded-[28px] p-8 text-center">
+          <div data-reveal className="glass head-gap grid min-h-[44svh] place-items-center rounded-[calc(28px*var(--rk))] p-8 text-center">
             <p className="mx-auto max-w-[26ch] text-[clamp(24px,3vw,36px)] font-medium tracking-[-0.02em]">The first photos land here after hack day.</p>
           </div>
         </div>

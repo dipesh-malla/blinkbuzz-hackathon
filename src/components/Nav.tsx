@@ -1,4 +1,4 @@
-import { useEffect, useId, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { scrollToId, stopScroll } from '../hooks/useSmoothScroll';
 import { useSite } from '../lib/store';
@@ -12,29 +12,42 @@ const links = [
   { id: 'faq', label: 'FAQ' },
 ];
 
-/** BlinkBuzz mark: an eye mid-blink with a spark of an idea in it. */
-export function Mark({ size = 28 }: { size?: number }) {
-  const id = useId().replace(/:/g, '');
+/**
+ * BlinkBuzz mark: the brand "B" (a bowl over a ring) with the orange spark in its eye.
+ * Colours follow the theme: the letterform uses the main text colour, the spark the accent.
+ * If an admin uploads a logo file (Settings → Brand), that image is used instead.
+ */
+export function Mark({ size = 30, src }: { size?: number; src?: string }) {
+  const site = useSite();
+  const logoUrl = src ?? site.logoUrl;
+  if (logoUrl) return <img src={logoUrl} alt="" width={size} height={size} className="object-contain" style={{ width: size, height: size }} />;
   return (
-    <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden>
-      <defs>
-        <linearGradient id={`bb${id}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--accent)" />
-          <stop offset=".55" stopColor="var(--accent2)" />
-          <stop offset="1" stopColor="var(--hot)" />
-        </linearGradient>
-      </defs>
-      <path d="M2.5 16C7 8.6 11.3 6 16 6s9 2.6 13.5 10C25 23.4 20.7 26 16 26S7 23.4 2.5 16Z" fill="none" stroke={`url(#bb${id})`} strokeWidth="2.2" strokeLinejoin="round" />
-      <path d="M16 9.5l1.7 4.8 4.8 1.7-4.8 1.7L16 22.5l-1.7-4.8L9.5 16l4.8-1.7Z" fill={`url(#bb${id})`} />
+    <svg viewBox="0 0 32 32" width={size} height={size} fill="none" aria-hidden>
+      <rect x="6.6" y="2" width="4.8" height="16" fill="var(--ink)" />
+      <path d="M9 4.4 H14.4 C18.3 4.4 20.6 6.8 20.6 9.7 C20.6 12.6 18.6 14.8 15.6 14.8" stroke="var(--ink)" strokeWidth="4.8" />
+      <circle cx="16" cy="21.8" r="7" stroke="var(--ink)" strokeWidth="4.8" />
+      <circle cx="16" cy="21.8" r="2.2" fill="var(--accent)" />
     </svg>
   );
 }
 
-export function Logo({ brand }: { brand: string }) {
+/** "BLINK BUZZ" in the brand colours; any other brand name is set plainly. */
+export function Wordmark({ brand, className = '' }: { brand: string; className?: string }) {
+  const m = brand.trim().match(/^(blink)\s*(buzz)$/i);
+  if (!m)
+    return <span className={`text-[18px] font-semibold tracking-[-0.025em] ${className}`}>{brand}</span>;
+  return (
+    <span style={{ fontFamily: "var(--font-heading)" }} className={`text-[19px] font-bold uppercase leading-none tracking-[0.01em] ${className}`}>
+      <span className="text-accent">Blink</span> <span>Buzz</span>
+    </span>
+  );
+}
+
+export function Logo({ brand, src }: { brand: string; src?: string }) {
   return (
     <span className="flex items-center gap-2.5">
-      <Mark />
-      <span className="text-[18px] font-semibold tracking-[-0.025em]">{brand}</span>
+      <Mark src={src} />
+      <Wordmark brand={brand} />
     </span>
   );
 }

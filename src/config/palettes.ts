@@ -18,6 +18,23 @@ export type Palette = {
 };
 
 export const palettes: Record<string, Palette> = {
+  // Brand palette from the BlinkBuzz identity: forest green #1B3D2E, orange #FF8A00, white, light grey #E5E5E5
+  blinkbuzz: {
+    id: 'blinkbuzz',
+    label: 'BlinkBuzz brand (green · orange)',
+    bg: '#0a1812',
+    bg2: '#1b3d2e',
+    surface: '#11281e',
+    glass: 'rgba(229, 229, 229, 0.06)',
+    line: 'rgba(229, 229, 229, 0.14)',
+    ink: '#f7f7f4',
+    muted: '#a8b8ae',
+    accent: '#ff8a00',
+    accent2: '#ffc266',
+    hot: '#ff8a00',
+    accentInk: '#0a1812',
+    scheme: 'dark',
+  },
   'neural-night': {
     id: 'neural-night',
     label: 'Neural night (cyan · violet · magenta)',
@@ -68,10 +85,13 @@ export const palettes: Record<string, Palette> = {
   },
 };
 
-export const DEFAULT_PALETTE = 'neural-night';
+export const DEFAULT_PALETTE = 'blinkbuzz';
 
-export function applyPalette(id: string) {
-  const p = palettes[id] ?? palettes[DEFAULT_PALETTE];
+let active: Palette = palettes[DEFAULT_PALETTE];
+
+/** Puts a (possibly customised) palette live: CSS variables + 3D scenes. */
+export function setActivePalette(p: Palette) {
+  active = p;
   const root = document.documentElement;
   const set = (k: string, v: string) => root.style.setProperty(k, v);
   set('--bg', p.bg);
@@ -92,7 +112,10 @@ export function applyPalette(id: string) {
   return p;
 }
 
+export function applyPalette(id: string) {
+  return setActivePalette(palettes[id] ?? palettes[DEFAULT_PALETTE]);
+}
+
 export function currentPalette(): Palette {
-  const id = document.documentElement.dataset.palette ?? DEFAULT_PALETTE;
-  return palettes[id] ?? palettes[DEFAULT_PALETTE];
+  return active;
 }

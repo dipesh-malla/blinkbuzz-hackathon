@@ -191,7 +191,7 @@ export default function Register({ gl }: { gl: boolean }) {
 
         <div data-reveal className="lg:col-span-7">
           {!e.registration_open ? (
-            <div className="glass rounded-[28px] bg-bg/50 p-8">
+            <div className="glass rounded-[calc(28px*var(--rk))] bg-bg/50 p-8">
               <p className="text-[20px] font-medium">Registration for {e.title} isn’t open yet.</p>
               <p className="mt-2 text-muted">Write to us and we’ll tell you the day it opens.</p>
               <a className="btn btn-primary mt-6" href={`mailto:${contactEmail}?subject=Notify me: ${e.title}`}>
@@ -199,7 +199,7 @@ export default function Register({ gl }: { gl: boolean }) {
               </a>
             </div>
           ) : (
-            <div className="glass rounded-[28px] bg-bg/55 p-4 sm:p-6 md:p-8">
+            <div className="glass rounded-[calc(28px*var(--rk))] bg-bg/55 p-4 sm:p-6 md:p-8">
               <Stepper
                 step={step}
                 onStepChange={(s) => {

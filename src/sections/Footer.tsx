@@ -2,7 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { site } from '../config/site';
 import { useSite } from '../lib/store';
 import { scrollToId } from '../hooks/useSmoothScroll';
-import { Mark } from '../components/Nav';
+import { Mark, Wordmark } from '../components/Nav';
 
 export default function Footer() {
   const { brand, contactEmail, sponsorEmail } = useSite();
@@ -18,7 +18,10 @@ export default function Footer() {
           <div className="md:col-span-5">
             <div className="flex items-center gap-3">
               <Mark size={34} />
-              <p className="text-[22px] font-medium tracking-[-0.02em]">{site.seriesName}</p>
+              <p className="flex items-baseline gap-2 text-[22px] font-medium tracking-[-0.02em]">
+                <Wordmark brand={brand} className="text-[24px]" />
+                <span className="text-muted">Hackathon</span>
+              </p>
             </div>
             <p className="mt-3 max-w-[38ch] text-[15px] text-muted">{site.location}. One real industry problem, every edition.</p>
           </div>

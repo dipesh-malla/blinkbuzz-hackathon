@@ -34,12 +34,12 @@ export default function Tracks() {
         <h2 data-reveal className="h-section lg:col-span-7">
           {count} fields. <span className="grad-text">One brain.</span>
         </h2>
-        <p data-reveal className="max-w-[46ch] text-[16px] text-muted lg:col-span-5 lg:justify-self-end">
+        <p data-reveal className="lead lg:col-span-5 lg:justify-self-end">
           Each edition brings its problem from one industry. These are the fields we build in; every one lights its own part of the brain above.
         </p>
       </div>
 
-      <div className="mt-14 grid grid-flow-row-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="head-gap grid grid-flow-row-dense grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {tracks.map((t, i) => {
           const big = i === 0;
           const solo = tracks.length === 1;
@@ -47,7 +47,7 @@ export default function Tracks() {
             <article
               key={t.id}
               data-reveal={i % 4}
-              className={`glass card-lift group relative flex flex-col overflow-hidden rounded-[26px] p-6 md:p-7 ${spans(tracks.length, i)} ${solo ? 'lg:grid lg:grid-cols-2 lg:gap-10' : ''}`}
+              className={`glass card-lift group relative flex flex-col overflow-hidden rounded-[calc(26px*var(--rk))] p-6 md:p-7 ${spans(tracks.length, i)} ${solo ? 'lg:grid lg:grid-cols-2 lg:gap-10' : ''}`}
               style={{ ['--t' as string]: t.color }}
             >
               <span
@@ -78,7 +78,7 @@ export default function Tracks() {
                     </svg>
                   </span>
                 </div>
-                <p className={`relative mt-3 text-muted ${big ? 'max-w-[40ch] text-[17px]' : 'text-[15px]'}`}>{t.blurb}</p>
+                <p className={`relative mt-3 text-muted ${big ? 'max-w-[40ch] text-[17px] leading-relaxed' : 'body-sm'}`}>{t.blurb}</p>
               </div>
               <div className={`relative mt-auto pt-6 ${solo ? 'min-h-[260px] lg:mt-0 lg:pt-0' : big ? 'min-h-[200px] flex-1' : 'h-[120px]'}`}>
                 <TrackViz visual={t.visual} color={t.color} />

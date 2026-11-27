@@ -97,7 +97,7 @@ export default function EditionPage() {
                 </Link>
               )}
             </div>
-            <div data-reveal className="glass self-end rounded-[28px] bg-bg/40 px-6 py-3 lg:col-span-5">
+            <div data-reveal className="glass self-end rounded-[calc(28px*var(--rk))] bg-bg/40 px-6 py-3 lg:col-span-5">
               <dl>
                 <Fact k="Who can join" v={e.audience} />
                 <Fact k="Venue" v={e.venue ?? 'To be announced'} />
@@ -131,7 +131,7 @@ export default function EditionPage() {
                   </li>
                 ))}
               </ol>
-              <div data-reveal className="glass h-fit rounded-[26px] p-6 lg:col-span-5">
+              <div data-reveal className="glass h-fit rounded-[calc(26px*var(--rk))] p-6 lg:col-span-5">
                 <h3 className="eyebrow">Prizes</h3>
                 {e.prizes.length ? (
                   <ul className="mt-4 divide-y divide-line">
@@ -154,7 +154,7 @@ export default function EditionPage() {
           <Section id="winners" tag="Winners">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
               {e.winners.map((w, i) => (
-                <div key={i} data-reveal={i} className="glass rounded-[24px] p-6">
+                <div key={i} data-reveal={i} className="glass rounded-[calc(24px*var(--rk))] p-6">
                   <p className="font-mono text-[12px] uppercase tracking-[0.06em] text-accent">{w.place}</p>
                   <p className="mt-10 text-[24px] font-medium tracking-[-0.02em]">{w.project}</p>
                   <p className="mt-1 text-muted">by {w.team}</p>

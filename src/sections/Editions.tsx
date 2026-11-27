@@ -36,7 +36,7 @@ export default function Editions() {
             <br />
             adds a planet.
           </h2>
-          <p data-reveal className="mt-5 max-w-[42ch] text-[17px] text-muted">
+          <p data-reveal className="lead mt-5 max-w-[42ch]">
             The glowing planet is the next edition. Outlined ones are planned. Open any of them for its venue, dates, problem,
             winners and photos.
           </p>
@@ -78,7 +78,7 @@ export default function Editions() {
         <div
           ref={stage}
           data-reveal
-          className="glass relative order-first aspect-square w-full overflow-hidden rounded-[28px] bg-[radial-gradient(70%_60%_at_50%_45%,color-mix(in_oklab,var(--accent2)_22%,transparent),transparent_75%)] lg:order-none lg:col-span-7"
+          className="glass relative order-first aspect-square w-full overflow-hidden rounded-[calc(28px*var(--rk))] bg-[radial-gradient(70%_60%_at_50%_45%,color-mix(in_oklab,var(--accent2)_22%,transparent),transparent_75%)] lg:order-none lg:col-span-7"
         >
           {gl ? (
             <Suspense fallback={null}>

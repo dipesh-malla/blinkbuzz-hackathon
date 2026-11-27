@@ -13,7 +13,7 @@ export default function Faq() {
           <h2 data-reveal className="h-section">
             Before you <span className="text-muted">register.</span>
           </h2>
-          <p data-reveal className="mt-5 max-w-[36ch] text-[17px] text-muted">
+          <p data-reveal className="lead mt-5 max-w-[36ch]">
             Something not covered? Write to{' '}
             <a className="link-draw text-ink" href={`mailto:${contactEmail}`}>
               {contactEmail}
@@ -21,7 +21,7 @@ export default function Faq() {
             .
           </p>
         </div>
-        <ul className="glass rounded-[28px] px-5 md:px-8 lg:col-span-7">
+        <ul className="glass rounded-[calc(28px*var(--rk))] px-5 md:px-8 lg:col-span-7">
           {faqs.map((f, i) => {
             const isOpen = open === f.id;
             return (
@@ -44,7 +44,7 @@ export default function Faq() {
                   style={{ gridTemplateRows: isOpen ? '1fr' : '0fr' }}
                 >
                   <div className="overflow-hidden">
-                    <p className="max-w-[60ch] pb-6 text-[16px] text-muted">{f.answer}</p>
+                    <p className="max-w-[62ch] pb-6 text-[16.5px] leading-[1.7] text-muted">{f.answer}</p>
                   </div>
                 </div>
               </li>

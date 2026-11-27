@@ -164,7 +164,7 @@ export default function Hero() {
       {/* glass widget cards, top right (Saltmere's instrument cards) */}
       {t && (
         <div className="pointer-events-none absolute right-[max(var(--edge),calc((100%-1440px)/2+var(--edge)))] top-[calc(var(--nav-h)+36px)] hidden w-[248px] flex-col gap-3 xl:flex">
-          <div ref={cardA} className="glass pointer-events-auto rounded-[22px] bg-bg/55 p-4">
+          <div ref={cardA} className="glass pointer-events-auto rounded-[calc(22px*var(--rk))] bg-bg/55 p-4">
             <div className="flex items-start justify-between">
               <span className="eyebrow">Track {String(active + 1).padStart(2, '0')}</span>
               <button onClick={() => scrollToId('tracks')} className="grid h-7 w-7 place-items-center rounded-full border border-line text-ink/80 transition-colors hover:text-ink" aria-label="See all tracks">
@@ -176,7 +176,7 @@ export default function Hero() {
             </p>
             <p className="mt-2 text-[13px] leading-snug text-ink/70">{t.blurb}</p>
           </div>
-          <div ref={cardB} className="glass pointer-events-auto rounded-[22px] bg-bg/55 p-4">
+          <div ref={cardB} className="glass pointer-events-auto rounded-[calc(22px*var(--rk))] bg-bg/55 p-4">
             <div className="flex items-center justify-between">
               <span className="eyebrow">Signal</span>
               <span className="font-mono text-[11px]" style={{ color: t.color }}>

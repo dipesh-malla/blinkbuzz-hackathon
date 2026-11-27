@@ -9,7 +9,7 @@ export const site = {
   headline: 'Where Nepal’s next ideas get wired.',
   tagline:
     'A hackathon series by BlinkBuzz. Every edition, one real industry brings one real problem, and students spend the day building answers to it.',
-  palette: 'neural-night',
+  palette: 'blinkbuzz',
   contactEmail: 'hello@blinkbuzz.example',
   sponsorEmail: 'partners@blinkbuzz.example',
   location: 'Kathmandu, Nepal',

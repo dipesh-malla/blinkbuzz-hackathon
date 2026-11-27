@@ -92,7 +92,7 @@ export default function PartnerForm({ open, onClose, initialTier }: { open: bool
 
   return createPortal(
     <div className="fixed inset-0 z-[95] grid place-items-center overflow-y-auto bg-bg/80 p-4 backdrop-blur-xl" role="dialog" aria-modal aria-labelledby="partner-title" onClick={onClose} data-lenis-prevent>
-      <div className="glass relative my-8 w-full max-w-[640px] rounded-[26px] p-6 md:p-8" onClick={(e) => e.stopPropagation()}>
+      <div className="glass relative my-8 w-full max-w-[640px] rounded-[calc(26px*var(--rk))] p-6 md:p-8" onClick={(e) => e.stopPropagation()}>
         <button onClick={onClose} className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-line text-muted hover:text-ink" aria-label="Close">
           <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
             <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />

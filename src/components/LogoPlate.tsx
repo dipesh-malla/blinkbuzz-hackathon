@@ -63,7 +63,7 @@ export default function LogoPlate({
   return (
     <div
       className={`relative shrink-0 overflow-hidden ${bg === 'light' ? 'shadow-[inset_0_0_0_1px_rgba(0,0,0,.06)]' : bg === 'dark' ? 'border border-line' : ''} ${className}`}
-      style={{ width: w, height: h, borderRadius: radius, background: plateBg[bg] }}
+      style={{ width: w, height: h, borderRadius: `calc(${radius}px * var(--rk))`, background: plateBg[bg] }}
     >
       {s.logo_url ? (
         <img

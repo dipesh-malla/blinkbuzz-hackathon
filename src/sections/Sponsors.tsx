@@ -189,7 +189,7 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
               aria-hidden={!isCur}
             >
               <div
-                className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[22px] border p-4 sm:p-5"
+                className="relative flex h-full w-full flex-col justify-between overflow-hidden rounded-[calc(22px*var(--rk))] border p-4 sm:p-5"
                 style={{
                   borderColor: isCur ? color : 'var(--line)',
                   background: `linear-gradient(180deg, color-mix(in oklab, ${color} ${isCur ? 16 : 6}%, var(--surface)), var(--bg))`,
@@ -198,7 +198,7 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
                 }}
               >
                 {/* playing-card corners, as in the demo */}
-                <div className="flex items-start justify-between font-mono text-[10px] uppercase tracking-[0.08em] sm:text-[11px]" style={{ color }}>
+                <div className="flex items-start justify-between font-mono text-[11px] uppercase tracking-[0.08em] sm:text-[11px]" style={{ color }}>
                   <span>{tierLabel[c.tier]}</span>
                   <span>{String(FEATURED_TIERS.indexOf(c.tier) + 1).padStart(2, '0')}</span>
                 </div>
@@ -207,7 +207,7 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
                     <div className="flex w-full flex-col items-center text-center">
                       <LogoPlate s={c.sponsor} w={mobile ? 158 : 200} h={mobile ? 108 : 138} radius={16} />
                       {c.sponsor.logo_url && <p className="mt-3 w-full truncate text-[16px] font-medium tracking-[-0.015em] sm:text-[18px]">{c.sponsor.name}</p>}
-                      <p className="mt-0.5 w-full truncate font-mono text-[10px] uppercase tracking-[0.08em] sm:text-[11px]" style={{ color }}>
+                      <p className="mt-0.5 w-full truncate font-mono text-[11px] uppercase tracking-[0.08em] sm:text-[11px]" style={{ color }}>
                         {sponsorKind(c.sponsor, tierLabel)}
                       </p>
                     </div>
@@ -220,7 +220,7 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
                     </div>
                   )}
                 </div>
-                <div className="flex items-end justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.08em] text-muted sm:text-[11px]">
+                <div className="flex items-end justify-between gap-3 font-mono text-[11px] uppercase tracking-[0.08em] text-muted sm:text-[11px]">
                   <span className="min-w-0 truncate">{c.sponsor ? host(c.sponsor.website) || 'Thank you' : 'Slot open'}</span>
                   <span className="shrink-0" style={{ color }}>
                     {c.sponsor ? (c.sponsor.website ? 'Visit ↗' : '') : 'Enquire ↗'}
@@ -322,7 +322,7 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
                 <div
                   key={`${c.key}-${i}`}
                   role="listitem"
-                  className="absolute flex flex-col items-center justify-start overflow-hidden rounded-[18px] border border-line text-center [backface-visibility:hidden]"
+                  className="absolute flex flex-col items-center justify-start overflow-hidden rounded-[calc(18px*var(--rk))] border border-line text-center [backface-visibility:hidden]"
                   style={{
                     width: w,
                     height: h,
@@ -341,13 +341,13 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
                       ) : (
                         <span className="mt-2" />
                       )}
-                      <span className="mt-1 w-full truncate font-mono text-[9.5px] uppercase leading-tight tracking-[0.08em] sm:text-[10.5px]" style={{ color }}>
+                      <span className="mt-1 w-full truncate font-mono text-[11px] uppercase leading-tight tracking-[0.08em] sm:text-[11px]" style={{ color }}>
                         {sponsorKind(c.sponsor, tierLabel)}
                       </span>
                     </>
                   ) : (
                     <span className="my-auto text-[13px] leading-tight text-muted">
-                      <span className="block font-mono text-[10px] uppercase tracking-[0.08em]" style={{ color }}>
+                      <span className="block font-mono text-[11px] uppercase tracking-[0.08em]" style={{ color }}>
                         {tierLabel[c.tier]}
                       </span>
                       Slot open
@@ -374,10 +374,10 @@ export function SponsorTiers({ sponsors }: { sponsors: Sponsor[] }) {
             <h3 className="eyebrow mb-4">{tierLabel[t]}</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {list.map((s) => (
-                <a key={s.id} href={s.website ?? undefined} target="_blank" rel="noreferrer" className="glass card-lift flex flex-col items-center rounded-[20px] p-3 text-center">
+                <a key={s.id} href={s.website ?? undefined} target="_blank" rel="noreferrer" className="glass card-lift flex flex-col items-center rounded-[calc(20px*var(--rk))] p-3 text-center">
                   <LogoPlate s={s} w={148} h={84} radius={12} />
                   <span className="mt-2 w-full truncate text-[14px] font-medium">{s.name}</span>
-                  <span className="w-full truncate font-mono text-[10px] uppercase tracking-[0.08em] text-muted">{sponsorKind(s, tierLabel)}</span>
+                  <span className="w-full truncate font-mono text-[11px] uppercase tracking-[0.08em] text-muted">{sponsorKind(s, tierLabel)}</span>
                 </a>
               ))}
             </div>
@@ -423,7 +423,7 @@ export default function Sponsors() {
           {pool.length ? 'Backed by people who build.' : 'Put your name on the next big idea.'}
         </h2>
         <div data-reveal className="lg:col-span-5 lg:justify-self-end">
-          <p className="max-w-[42ch] text-[16px] text-muted">
+          <p className="lead max-w-[42ch]">
             Each edition is shaped by one industry partner and carried by its sponsors. Slots for {current?.title ?? 'the next edition'} are open.
           </p>
           <button type="button" onClick={() => setForm({ open: true })} className="btn btn-primary mt-6">
@@ -433,7 +433,7 @@ export default function Sponsors() {
         </div>
       </div>
 
-      <div data-reveal className="mt-12">
+      <div data-reveal className="head-gap">
         <FeaturedSlider cards={featured} onOpenSlot={(t) => setForm({ open: true, tier: t })} />
       </div>
 

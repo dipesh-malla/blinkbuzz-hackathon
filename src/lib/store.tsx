@@ -2,7 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { getEditions, getFaqs, getMedia, getSettings, getSponsors, getTracks } from './data';
 import type { Edition, Faq, Media, Settings, Sponsor, Track } from './types';
 import { site } from '../config/site';
-import { applyPalette } from '../config/palettes';
+import { applyTheme, parseTheme } from '../config/theme';
 
 type SiteData = {
   loading: boolean;
@@ -19,13 +19,14 @@ type SiteData = {
   tagline: string;
   contactEmail: string;
   sponsorEmail: string;
+  logoUrl: string;
   reload: () => Promise<void>;
 };
 
 const Ctx = createContext<SiteData | null>(null);
 
 export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Omit<SiteData, 'reload' | 'brand' | 'headline' | 'tagline' | 'contactEmail' | 'sponsorEmail' | 'current'>>({
+  const [state, setState] = useState<Omit<SiteData, 'reload' | 'brand' | 'headline' | 'tagline' | 'contactEmail' | 'sponsorEmail' | 'logoUrl' | 'current'>>({
     loading: true,
     error: null,
     editions: [],
@@ -46,16 +47,28 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         getTracks(),
         getSettings(),
       ]);
-      applyPalette(settings.palette ?? site.palette);
+      const theme = parseTheme(settings, site.palette);
+      applyTheme(theme);
+      try {
+        localStorage.setItem('bb-theme', JSON.stringify(theme)); // next visit starts in the right colours
+      } catch {
+        /* private mode */
+      }
       setState({ loading: false, error: null, editions, sponsors, media, faqs, tracks, settings });
     } catch (e) {
-      applyPalette(site.palette);
+      applyTheme(parseTheme({}, site.palette));
       setState((s) => ({ ...s, loading: false, error: (e as Error).message }));
     }
   }, []);
 
   useEffect(() => {
-    applyPalette(site.palette);
+    let cached: string | undefined;
+    try {
+      cached = localStorage.getItem('bb-theme') ?? undefined;
+    } catch {
+      /* private mode */
+    }
+    applyTheme(parseTheme({ theme: cached }, site.palette));
     load();
   }, [load]);
 
@@ -73,6 +86,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     tagline: state.settings.tagline || site.tagline,
     contactEmail: state.settings.contactEmail || site.contactEmail,
     sponsorEmail: state.settings.sponsorEmail || site.sponsorEmail,
+    logoUrl: state.settings.logoUrl || '',
     reload: load,
   };
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
