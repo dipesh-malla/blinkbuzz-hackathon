@@ -1,6 +1,6 @@
 import { supabase, isDemo } from './supabase';
 import { demoEditions, demoFaqs, demoMedia, demoSponsors, demoTracks } from './demo';
-import type { Edition, Faq, Media, Registration, Settings, Sponsor, Track } from './types';
+import type { Edition, Faq, Media, Registration, Settings, Sponsor, SponsorRequest, Track } from './types';
 
 export async function getEditions(): Promise<Edition[]> {
   if (!supabase) return demoEditions;
@@ -85,6 +85,32 @@ export async function submitRegistration(r: Registration): Promise<void> {
     await wait(600 * attempt);
   }
   throw new Error(last);
+}
+
+/** Saves a "Become a partner" request, then asks the server to email the team (best effort). */
+export async function submitSponsorRequest(r: SponsorRequest): Promise<void> {
+  if (isDemo || !supabase) {
+    await wait(700);
+    console.info('[demo] partner request', r);
+    return;
+  }
+  const row = { ...r, id: r.id ?? newId(), status: 'new', notified_at: null };
+  let last = 'Something went wrong. Please try again.';
+  let saved = false;
+  for (let attempt = 1; attempt <= 4; attempt++) {
+    const { error, status } = await supabase.from('sponsor_requests').insert(row);
+    if (!error || error.code === '23505') {
+      saved = true;
+      break;
+    }
+    const retryable = status === 0 || status === 408 || status === 429 || status >= 500;
+    last = retryable ? 'The connection dropped. Please check your internet and send again.' : error.code === '23514' ? 'Please check the details: a field is too short or the email looks wrong.' : error.message;
+    if (!retryable || attempt === 4) break;
+    await wait(600 * attempt);
+  }
+  if (!saved) throw new Error(last);
+  // the email is a bonus: the request is already saved, so never fail the form over it
+  supabase.functions.invoke('notify-partner-request', { body: { id: row.id } }).catch(() => {});
 }
 
 export function youtubeId(url: string): string | null {

@@ -198,3 +198,36 @@ where not exists (select 1 from public.tracks);
 -- Upgrading from the first version of this schema? Run these two lines once:
 -- alter table public.sponsors drop constraint if exists sponsors_tier_check;
 -- alter table public.sponsors add constraint sponsors_tier_check check (tier in ('title','powered','gold','sponsor','partner','community'));
+
+-- ── Partner requests ("Become a partner" form) ───────────────────
+create table if not exists public.sponsor_requests (
+  id uuid primary key default gen_random_uuid(),
+  company text not null check (char_length(company) between 2 and 120),
+  contact_name text not null check (char_length(contact_name) between 2 and 120),
+  email text not null check (email ~* '^[^@\s]+@[^@\s]+\.[^@\s]{2,}$' and char_length(email) <= 200),
+  phone text check (phone is null or char_length(phone) <= 40),
+  website text check (website is null or char_length(website) <= 300),
+  tier_interest text not null default 'sponsor' check (tier_interest in ('title','powered','gold','sponsor','partner','community','not-sure')),
+  message text check (message is null or char_length(message) <= 2000),
+  status text not null default 'new' check (status in ('new','contacted','accepted','declined')),
+  notified_at timestamptz,
+  created_at timestamptz not null default now()
+);
+alter table public.sponsor_requests enable row level security;
+drop policy if exists "public insert" on public.sponsor_requests;
+create policy "public insert" on public.sponsor_requests for insert to anon, authenticated
+  with check (status = 'new' and notified_at is null);
+drop policy if exists "admin all" on public.sponsor_requests;
+create policy "admin all" on public.sponsor_requests for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());
+create index if not exists sponsor_requests_created_idx on public.sponsor_requests (created_at desc);
+
+-- Admin-only settings (never public), e.g. notifyEmail: where partner-request emails go.
+create table if not exists public.private_settings (
+  key text primary key,
+  value text not null
+);
+alter table public.private_settings enable row level security;
+drop policy if exists "admin all" on public.private_settings;
+create policy "admin all" on public.private_settings for all to authenticated
+  using (public.is_admin()) with check (public.is_admin());

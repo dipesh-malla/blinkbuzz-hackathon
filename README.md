@@ -52,6 +52,18 @@ npm run build      # outputs dist/
 ## 4. Running an edition from `/admin`
 Editions (status, current, registration open or closed, team size, fee, timeline, prizes, problem, winners) · Registrations (search, CSV export for Excel) · Tracks · Sponsors (tiers: title, powered by, gold, sponsor, industry partner, community) · Gallery (photos and YouTube) · FAQ · Settings.
 
+## 5. Partner requests and email alerts
+
+"Become a partner" on the site opens a form. Requests land in **Admin → Sponsors → Partner requests**, where you can mark them contacted / accepted / declined, export them, or press **Add as sponsor** to prefill the normal sponsor form.
+
+To also get an email for each request:
+
+1. Create a free account at [resend.com](https://resend.com) and make an API key.
+2. In Supabase → Edge Functions → Secrets, add `RESEND_API_KEY` with that key. (Optional: once your domain is verified in Resend, add `NOTIFY_FROM`, e.g. `BlinkBuzz <hello@yourdomain.com>`.)
+3. In Admin → Sponsors, type the address(es) that should get the emails and press Save.
+
+Until your domain is verified, Resend's test sender can only mail the address you signed up to Resend with. The function lives in `supabase/functions/notify-partner-request`.
+
 ## Performance and accessibility
 - Never more than 3 WebGL canvases, and each renders only while on screen.
 - Fewer neurons and particles on phones.

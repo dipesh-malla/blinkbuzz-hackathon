@@ -94,3 +94,21 @@ export type Settings = {
   contactEmail?: string;
   sponsorEmail?: string;
 };
+
+export type RequestTier = SponsorTier | 'not-sure';
+export type RequestStatus = 'new' | 'contacted' | 'accepted' | 'declined';
+
+/** Sent from the "Become a partner" form; only admins can read these. */
+export type SponsorRequest = {
+  id?: string;
+  company: string;
+  contact_name: string;
+  email: string;
+  phone: string | null;
+  website: string | null;
+  tier_interest: RequestTier;
+  message: string | null;
+  status?: RequestStatus;
+  notified_at?: string | null;
+  created_at?: string;
+};

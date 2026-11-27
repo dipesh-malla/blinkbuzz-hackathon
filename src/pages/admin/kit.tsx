@@ -47,10 +47,33 @@ export async function removeStoredFile(url: string) {
   await supabase!.storage.from(MEDIA_BUCKET).remove([decodeURIComponent(url.slice(i + marker.length))]);
 }
 
+/**
+ * Scales a big raster image down in the browser (keeps transparency, saves as WebP),
+ * so a 2 MB logo becomes a few dozen KB and loads instantly on the site.
+ * SVG, GIF and already-small files are left alone.
+ */
+export async function shrinkImage(file: File, max = 800): Promise<File> {
+  if (!/^image\/(png|jpe?g|webp)$/i.test(file.type)) return file;
+  try {
+    const bmp = await createImageBitmap(file);
+    const scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size < 300_000) return file;
+    const c = document.createElement('canvas');
+    c.width = Math.round(bmp.width * scale);
+    c.height = Math.round(bmp.height * scale);
+    c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise<Blob | null>((res) => c.toBlob(res, 'image/webp', 0.9));
+    if (!blob || blob.size >= file.size) return file;
+    return new File([blob], file.name.replace(/\.\w+$/, '') + '.webp', { type: 'image/webp' });
+  } catch {
+    return file;
+  }
+}
+
 export async function uploadFile(file: File, folder: string): Promise<string> {
   const ext = file.name.split('.').pop()?.toLowerCase() || 'bin';
   const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-  const { error } = await supabase!.storage.from(MEDIA_BUCKET).upload(path, file, { cacheControl: '31536000', upsert: false });
+  const { error } = await supabase!.storage.from(MEDIA_BUCKET).upload(path, file, { cacheControl: '31536000', upsert: false, contentType: file.type || undefined });
   if (error) throw error;
   return supabase!.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl;
 }

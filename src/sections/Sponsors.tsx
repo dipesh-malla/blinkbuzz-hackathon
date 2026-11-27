@@ -5,7 +5,8 @@ import { Arrow, Section } from '../components/ui';
 import { useSite } from '../lib/store';
 import { useMediaQuery } from '../hooks/usePalette';
 import { prefersReducedMotion } from '../hooks/useSmoothScroll';
-import { FEATURED_TIERS, type Sponsor, type SponsorTier } from '../lib/types';
+import { FEATURED_TIERS, type RequestTier, type Sponsor, type SponsorTier } from '../lib/types';
+import PartnerForm from '../components/PartnerForm';
 
 gsap.registerPlugin(Draggable);
 
@@ -38,11 +39,20 @@ function host(url: string | null) {
   }
 }
 
-function LogoFace({ s, big }: { s: Sponsor; big?: boolean }) {
+/** The logo fills the box it is given (object-contain); no logo → the name, set large. */
+function LogoFace({ s, big, eager }: { s: Sponsor; big?: boolean; eager?: boolean }) {
   return s.logo_url ? (
-    <img src={s.logo_url} alt={s.name} loading="lazy" className={`${big ? 'max-h-20 max-w-[78%]' : 'max-h-10 max-w-[80%]'} object-contain`} draggable={false} />
+    <img
+      src={s.logo_url}
+      alt={s.name}
+      // rings sit in 3D space where lazy-loading can wait forever, so they load eagerly
+      loading={eager ? 'eager' : 'lazy'}
+      decoding="async"
+      className="h-full w-full object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,.35)]"
+      draggable={false}
+    />
   ) : (
-    <span className={`${big ? 'text-[28px]' : 'text-[17px]'} text-center font-semibold leading-tight tracking-[-0.02em]`}>{s.name}</span>
+    <span className={`${big ? 'text-[30px]' : 'text-[19px]'} text-center font-semibold leading-tight tracking-[-0.02em]`}>{s.name}</span>
   );
 }
 
@@ -50,7 +60,7 @@ function LogoFace({ s, big }: { s: Sponsor; big?: boolean }) {
 //  Infinite card slider (after the GSAP demo): the front card is
 //  large, the rest fan out smaller and fade. Drag, arrows or keys.
 // ─────────────────────────────────────────────────────────────
-function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: string }) {
+function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: SponsorTier) => void }) {
   const stage = useRef<HTMLDivElement>(null);
   const proxy = useRef<HTMLDivElement>(null);
   const els = useRef<(HTMLDivElement | null)[]>([]);
@@ -81,7 +91,14 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
   }, [n, spacing]);
 
   const goTo = useCallback(
-    (target: number) => gsap.to(pos.current, { p: target, duration: 0.8, ease: 'expo.out', onUpdate: layout, overwrite: true }),
+    (target: number) =>
+      gsap.to(pos.current, {
+        p: target,
+        duration: 0.8,
+        ease: 'expo.out',
+        onUpdate: layout,
+        overwrite: true,
+      }),
     [layout],
   );
 
@@ -89,25 +106,48 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
     layout();
   }, [layout]);
 
-  // drag
+  // bring card i to the front by the shortest way round
+  const bringToFront = useCallback(
+    (i: number) => {
+      const p = Math.round(pos.current.p);
+      goTo(p + gsap.utils.wrap(-n / 2, n / 2, i - p));
+    },
+    [goTo, n],
+  );
+  const cardsRef = useRef(cards);
+  cardsRef.current = cards;
+  const moved = useRef(false);
+  // a click (not a drag) on a side card brings it to the front; on the open front card it opens the form
+  const onCardClick = (i: number) => {
+    if (moved.current) return;
+    const front = gsap.utils.wrap(0, n, Math.round(pos.current.p));
+    if (i !== front) return bringToFront(i);
+    const c = cardsRef.current[i];
+    if (c && !c.sponsor) onOpenSlot(c.tier);
+  };
+
+  // drag; a click (no drag) on a side card brings it to the front, on the open front card opens the form
   useEffect(() => {
     if (!proxy.current) return;
     let startP = 0;
     const [d] = Draggable.create(proxy.current, {
       type: 'x',
       trigger: stage.current,
+      zIndexBoost: false, // keep the invisible drag layer under the cards so clicks reach them
       onPress() {
+        moved.current = false;
         gsap.killTweensOf(pos.current);
         startP = pos.current.p;
         setHold(true);
       },
       onDrag() {
+        if (Math.abs(this.x - this.startX) > 3) moved.current = true;
         pos.current.p = startP - (this.x - this.startX) / spacing;
         layout();
       },
       onRelease() {
         const v = (this.x - this.startX) / spacing;
-        goTo(Math.round(startP - v * 1.15));
+        if (Math.abs(this.x - this.startX) > 3) goTo(Math.round(startP - v * 1.15));
         gsap.set(proxy.current, { x: 0 });
         setHold(false);
       },
@@ -139,7 +179,11 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
       <div
         ref={stage}
         className="relative mx-auto h-[360px] cursor-grab touch-pan-y select-none overflow-hidden active:cursor-grabbing sm:h-[430px]"
-        style={{ perspective: '1400px', maskImage: 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)', WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)' }}
+        style={{
+          perspective: '1400px',
+          maskImage: 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
+          WebkitMaskImage: 'linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent)',
+        }}
         role="region"
         aria-roledescription="carousel"
         aria-label="Featured sponsors"
@@ -155,7 +199,9 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
               ref={(el) => {
                 els.current[i] = el;
               }}
-              className="absolute left-1/2 top-1/2 -ml-[95px] -mt-[135px] h-[270px] w-[190px] sm:-ml-[120px] sm:-mt-[165px] sm:h-[330px] sm:w-[240px]"
+              data-card={i}
+              onClick={() => onCardClick(i)}
+              className={`absolute left-1/2 top-1/2 -ml-[95px] -mt-[135px] h-[270px] w-[190px] sm:-ml-[120px] sm:-mt-[165px] sm:h-[330px] sm:w-[240px] ${isCur ? '' : 'cursor-pointer'}`}
               aria-hidden={!isCur}
             >
               <div
@@ -172,9 +218,11 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
                   <span>{tierLabel[c.tier]}</span>
                   <span>{String(FEATURED_TIERS.indexOf(c.tier) + 1).padStart(2, '0')}</span>
                 </div>
-                <div className="grid flex-1 place-items-center">
+                <div className="grid min-h-0 flex-1 place-items-center py-3">
                   {c.sponsor ? (
-                    <LogoFace s={c.sponsor} big />
+                    <div className="grid h-full max-h-[190px] w-full place-items-center sm:max-h-[230px]">
+                      <LogoFace s={c.sponsor} big />
+                    </div>
                   ) : (
                     <div className="text-center">
                       <svg viewBox="0 0 24 24" width="34" height="34" className="mx-auto" style={{ color }} aria-hidden>
@@ -193,7 +241,9 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
                 {/* fades side cards */}
                 <span className="pointer-events-none absolute inset-0 bg-bg" style={{ opacity: 'var(--dim, 0)' as unknown as number }} />
                 {c.sponsor?.website && isCur && <a href={c.sponsor.website} target="_blank" rel="noreferrer" className="absolute inset-0" aria-label={`Visit ${c.sponsor.name}`} />}
-                {!c.sponsor && isCur && <a href={`mailto:${sponsorEmail}?subject=${encodeURIComponent(`${tierLabel[c.tier]} slot`)}`} className="absolute inset-0" aria-label={`Ask about the ${tierLabel[c.tier]} slot`} />}
+                {!c.sponsor && isCur && (
+                  <button type="button" className="absolute inset-0 cursor-pointer" aria-label={`Ask about the ${tierLabel[c.tier]} slot`} />
+                )}
               </div>
             </div>
           );
@@ -214,6 +264,23 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
   );
 }
 
+function useViewportWidth() {
+  const [vw, setVw] = useState(() => (typeof window === 'undefined' ? 1440 : window.innerWidth));
+  useEffect(() => {
+    let t = 0;
+    const on = () => {
+      clearTimeout(t);
+      t = window.setTimeout(() => setVw(window.innerWidth), 150);
+    };
+    window.addEventListener('resize', on);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('resize', on);
+    };
+  }, []);
+  return vw;
+}
+
 // ─────────────────────────────────────────────────────────────
 //  Rotating ring: cards travel round a circle, left to right
 //  (or the other way), pausing on hover.
@@ -221,17 +288,23 @@ function FeaturedSlider({ cards, sponsorEmail }: { cards: Card[]; sponsorEmail: 
 function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; label: string }) {
   const mobile = useMediaQuery('(max-width: 639px)');
   const reduce = prefersReducedMotion();
+  const vw = useViewportWidth();
+  const w = mobile ? 168 : 232;
+  const h = Math.round(w * 0.68);
+  const gap = mobile ? 18 : 26;
+  // the ring is as wide as the screen, so its front arc runs edge to edge like the other sections
+  const want = Math.max(mobile ? 230 : 380, vw * (mobile ? 0.62 : 0.64));
+  const slots = Math.max(10, items.length, Math.round((2 * Math.PI * want) / (w + gap)));
   const list = useMemo(() => {
     let out = items;
-    while (out.length < 10) out = [...out, ...items];
-    return out.slice(0, Math.max(10, items.length));
-  }, [items]);
-  const w = mobile ? 132 : 176;
-  const r = Math.max(mobile ? 230 : 380, ((w + 22) * list.length) / (2 * Math.PI));
+    while (out.length < slots) out = [...out, ...items];
+    return out.slice(0, slots);
+  }, [items, slots]);
+  const r = Math.max(want, ((w + gap) * list.length) / (2 * Math.PI));
   return (
     <div className="group relative" aria-label={label} role="list">
       <div
-        className="relative -mx-[var(--edge)] h-[170px] overflow-hidden sm:h-[200px]"
+        className="relative -mx-[var(--edge)] h-[200px] overflow-hidden sm:h-[260px]"
         style={{
           perspective: '1600px',
           maskImage: 'linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent)',
@@ -240,7 +313,11 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
       >
         <div
           className="absolute left-1/2 top-1/2"
-          style={{ transformStyle: 'preserve-3d', transform: `translateZ(-${r}px) rotateX(-6deg)` }}
+          style={{
+            transformStyle: 'preserve-3d',
+            // tilt so the arc reads as a ring, then lift it back so the front cards sit in the middle of the band
+            transform: `translateY(${-Math.round(r * Math.sin((5 * Math.PI) / 180))}px) translateZ(-${r}px) rotateX(-5deg)`,
+          }}
         >
           <div
             className="ring-spin"
@@ -255,18 +332,23 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
                 <div
                   key={`${c.key}-${i}`}
                   role="listitem"
-                  className="absolute grid place-items-center rounded-[18px] border border-line p-3 text-center [backface-visibility:hidden]"
+                  className="absolute flex flex-col items-center justify-center rounded-[18px] border border-line px-4 pb-2.5 pt-3.5 text-center [backface-visibility:hidden]"
                   style={{
                     width: w,
-                    height: w * 0.62,
+                    height: h,
                     left: -w / 2,
-                    top: (-w * 0.62) / 2,
+                    top: -h / 2,
                     transform: `rotateY(${(360 / list.length) * i}deg) translateZ(${r}px)`,
                     background: `linear-gradient(180deg, color-mix(in oklab, ${color} 10%, var(--surface)), color-mix(in oklab, var(--bg) 85%, transparent))`,
                   }}
                 >
                   {c.sponsor ? (
-                    <LogoFace s={c.sponsor} />
+                    <>
+                      <div className="grid min-h-0 w-full flex-1 place-items-center">
+                        <LogoFace s={c.sponsor} eager />
+                      </div>
+                      {c.sponsor.logo_url && <span className="mt-1.5 max-w-full truncate font-mono text-[10px] uppercase tracking-[0.08em] text-muted">{c.sponsor.name}</span>}
+                    </>
                   ) : (
                     <span className="text-[13px] leading-tight text-muted">
                       <span className="block font-mono text-[10px] uppercase tracking-[0.08em]" style={{ color }}>
@@ -296,13 +378,7 @@ export function SponsorTiers({ sponsors }: { sponsors: Sponsor[] }) {
             <h3 className="eyebrow mb-4">{tierLabel[t]}</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {list.map((s) => (
-                <a
-                  key={s.id}
-                  href={s.website ?? undefined}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="glass card-lift grid h-28 place-items-center rounded-[20px] px-6"
-                >
+                <a key={s.id} href={s.website ?? undefined} target="_blank" rel="noreferrer" className="glass card-lift grid h-28 place-items-center rounded-[20px] px-6">
                   <LogoFace s={s} />
                 </a>
               ))}
@@ -330,9 +406,17 @@ export default function Sponsors() {
 
   const ringA: Card[] = pool.filter((s) => s.tier === 'sponsor').map((s) => ({ key: s.id, tier: s.tier, sponsor: s }));
   const ringB: Card[] = pool.filter((s) => s.tier === 'partner' || s.tier === 'community').map((s) => ({ key: s.id, tier: s.tier, sponsor: s }));
-  const open = (t: SponsorTier, k: number): Card[] => Array.from({ length: k }, (_, i) => ({ key: `o-${t}-${i}`, tier: t, sponsor: null }));
+  const open = (t: SponsorTier, k: number): Card[] =>
+    Array.from({ length: k }, (_, i) => ({
+      key: `o-${t}-${i}`,
+      tier: t,
+      sponsor: null,
+    }));
 
-  const mail = `mailto:${sponsorEmail}?subject=${encodeURIComponent(`Partnering on ${current?.title ?? 'the hackathon'}`)}`;
+  const [form, setForm] = useState<{ open: boolean; tier?: RequestTier }>({
+    open: false,
+  });
+  const closeForm = useCallback(() => setForm((f) => ({ ...f, open: false })), []);
 
   return (
     <Section id="sponsors" tag="Sponsors & partners">
@@ -344,27 +428,32 @@ export default function Sponsors() {
           <p className="max-w-[42ch] text-[16px] text-muted">
             Each edition is shaped by one industry partner and carried by its sponsors. Slots for {current?.title ?? 'the next edition'} are open.
           </p>
-          <a href={mail} className="btn btn-primary mt-6">
+          <button type="button" onClick={() => setForm({ open: true })} className="btn btn-primary mt-6">
             Become a partner <Arrow />
-          </a>
+          </button>
           <p className="mt-3 font-mono text-[12px] text-muted">{sponsorEmail}</p>
         </div>
       </div>
 
       <div data-reveal className="mt-12">
-        <FeaturedSlider cards={featured} sponsorEmail={sponsorEmail} />
+        <FeaturedSlider cards={featured} onOpenSlot={(t) => setForm({ open: true, tier: t })} />
       </div>
 
       <div className="mt-20 space-y-4">
-        <p data-reveal className="eyebrow text-center">Sponsors</p>
+        <p data-reveal className="eyebrow text-center">
+          Sponsors
+        </p>
         <div data-reveal>
           <Ring items={ringA.length ? ringA : open('sponsor', 4)} label="Sponsors" />
         </div>
-        <p data-reveal className="eyebrow pt-6 text-center">Industry & community partners</p>
+        <p data-reveal className="eyebrow pt-6 text-center">
+          Industry & community partners
+        </p>
         <div data-reveal>
           <Ring items={ringB.length ? ringB : [...open('partner', 2), ...open('community', 2)]} reverse label="Partners" />
         </div>
       </div>
+      <PartnerForm open={form.open} initialTier={form.tier} onClose={closeForm} />
     </Section>
   );
 }
