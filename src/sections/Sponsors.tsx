@@ -7,6 +7,7 @@ import { useMediaQuery } from '../hooks/usePalette';
 import { prefersReducedMotion } from '../hooks/useSmoothScroll';
 import { FEATURED_TIERS, type RequestTier, type Sponsor, type SponsorTier } from '../lib/types';
 import PartnerForm from '../components/PartnerForm';
+import LogoPlate, { sponsorKind } from '../components/LogoPlate';
 
 gsap.registerPlugin(Draggable);
 
@@ -37,23 +38,6 @@ function host(url: string | null) {
   } catch {
     return url;
   }
-}
-
-/** The logo fills the box it is given (object-contain); no logo → the name, set large. */
-function LogoFace({ s, big, eager }: { s: Sponsor; big?: boolean; eager?: boolean }) {
-  return s.logo_url ? (
-    <img
-      src={s.logo_url}
-      alt={s.name}
-      // rings sit in 3D space where lazy-loading can wait forever, so they load eagerly
-      loading={eager ? 'eager' : 'lazy'}
-      decoding="async"
-      className="h-full w-full object-contain drop-shadow-[0_6px_18px_rgba(0,0,0,.35)]"
-      draggable={false}
-    />
-  ) : (
-    <span className={`${big ? 'text-[30px]' : 'text-[19px]'} text-center font-semibold leading-tight tracking-[-0.02em]`}>{s.name}</span>
-  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -218,10 +202,14 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
                   <span>{tierLabel[c.tier]}</span>
                   <span>{String(FEATURED_TIERS.indexOf(c.tier) + 1).padStart(2, '0')}</span>
                 </div>
-                <div className="grid min-h-0 flex-1 place-items-center py-3">
+                <div className="grid min-h-0 flex-1 place-items-center">
                   {c.sponsor ? (
-                    <div className="grid h-full max-h-[190px] w-full place-items-center sm:max-h-[230px]">
-                      <LogoFace s={c.sponsor} big />
+                    <div className="flex w-full flex-col items-center text-center">
+                      <LogoPlate s={c.sponsor} w={mobile ? 158 : 200} h={mobile ? 108 : 138} radius={16} />
+                      {c.sponsor.logo_url && <p className="mt-3 w-full truncate text-[16px] font-medium tracking-[-0.015em] sm:text-[18px]">{c.sponsor.name}</p>}
+                      <p className="mt-0.5 w-full truncate font-mono text-[10px] uppercase tracking-[0.08em] sm:text-[11px]" style={{ color }}>
+                        {sponsorKind(c.sponsor, tierLabel)}
+                      </p>
                     </div>
                   ) : (
                     <div className="text-center">
@@ -232,18 +220,16 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
                     </div>
                   )}
                 </div>
-                <div className="flex items-end justify-between font-mono text-[10px] uppercase tracking-[0.08em] text-muted sm:text-[11px]">
-                  <span className="truncate">{c.sponsor ? host(c.sponsor.website) || c.sponsor.name : 'Slot open'}</span>
-                  <span className="rotate-180" style={{ color }}>
-                    {tierLabel[c.tier]}
+                <div className="flex items-end justify-between gap-3 font-mono text-[10px] uppercase tracking-[0.08em] text-muted sm:text-[11px]">
+                  <span className="min-w-0 truncate">{c.sponsor ? host(c.sponsor.website) || 'Thank you' : 'Slot open'}</span>
+                  <span className="shrink-0" style={{ color }}>
+                    {c.sponsor ? (c.sponsor.website ? 'Visit ↗' : '') : 'Enquire ↗'}
                   </span>
                 </div>
                 {/* fades side cards */}
                 <span className="pointer-events-none absolute inset-0 bg-bg" style={{ opacity: 'var(--dim, 0)' as unknown as number }} />
                 {c.sponsor?.website && isCur && <a href={c.sponsor.website} target="_blank" rel="noreferrer" className="absolute inset-0" aria-label={`Visit ${c.sponsor.name}`} />}
-                {!c.sponsor && isCur && (
-                  <button type="button" className="absolute inset-0 cursor-pointer" aria-label={`Ask about the ${tierLabel[c.tier]} slot`} />
-                )}
+                {!c.sponsor && isCur && <button type="button" className="absolute inset-0 cursor-pointer" aria-label={`Ask about the ${tierLabel[c.tier]} slot`} />}
               </div>
             </div>
           );
@@ -253,8 +239,10 @@ function FeaturedSlider({ cards, onOpenSlot }: { cards: Card[]; onOpenSlot: (t: 
         <button onClick={() => step(-1)} className="btn btn-ghost h-11 px-5 text-[14px]" aria-label="Previous sponsor">
           Prev
         </button>
-        <span className="min-w-[160px] text-center font-mono text-[12px] uppercase tracking-[0.06em] text-muted" aria-live="polite">
-          {cards[current]?.sponsor?.name ?? `${tierLabel[cards[current]?.tier ?? 'title']} · open`}
+        <span className="min-w-[160px] max-w-[60vw] truncate text-center font-mono text-[12px] uppercase tracking-[0.06em] text-muted" aria-live="polite">
+          {cards[current]?.sponsor
+            ? `${cards[current].sponsor!.name} · ${sponsorKind(cards[current].sponsor!, tierLabel)}`
+            : `${tierLabel[cards[current]?.tier ?? 'title']} · open`}
         </span>
         <button onClick={() => step(1)} className="btn btn-ghost h-11 px-5 text-[14px]" aria-label="Next sponsor">
           Next
@@ -290,7 +278,9 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
   const reduce = prefersReducedMotion();
   const vw = useViewportWidth();
   const w = mobile ? 168 : 232;
-  const h = Math.round(w * 0.68);
+  const pad = mobile ? 10 : 12;
+  const plateH = mobile ? 74 : 100;
+  const h = pad * 2 + plateH + (mobile ? 40 : 46); // plate + name + kind
   const gap = mobile ? 18 : 26;
   // the ring is as wide as the screen, so its front arc runs edge to edge like the other sections
   const want = Math.max(mobile ? 230 : 380, vw * (mobile ? 0.62 : 0.64));
@@ -332,10 +322,11 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
                 <div
                   key={`${c.key}-${i}`}
                   role="listitem"
-                  className="absolute flex flex-col items-center justify-center rounded-[18px] border border-line px-4 pb-2.5 pt-3.5 text-center [backface-visibility:hidden]"
+                  className="absolute flex flex-col items-center justify-start overflow-hidden rounded-[18px] border border-line text-center [backface-visibility:hidden]"
                   style={{
                     width: w,
                     height: h,
+                    padding: pad,
                     left: -w / 2,
                     top: -h / 2,
                     transform: `rotateY(${(360 / list.length) * i}deg) translateZ(${r}px)`,
@@ -344,13 +335,18 @@ function Ring({ items, reverse, label }: { items: Card[]; reverse?: boolean; lab
                 >
                   {c.sponsor ? (
                     <>
-                      <div className="grid min-h-0 w-full flex-1 place-items-center">
-                        <LogoFace s={c.sponsor} eager />
-                      </div>
-                      {c.sponsor.logo_url && <span className="mt-1.5 max-w-full truncate font-mono text-[10px] uppercase tracking-[0.08em] text-muted">{c.sponsor.name}</span>}
+                      <LogoPlate s={c.sponsor} w={w - pad * 2} h={plateH} eager radius={12} />
+                      {c.sponsor.logo_url ? (
+                        <span className="mt-2 w-full truncate text-[14px] font-medium leading-tight tracking-[-0.01em] sm:text-[15px]">{c.sponsor.name}</span>
+                      ) : (
+                        <span className="mt-2" />
+                      )}
+                      <span className="mt-1 w-full truncate font-mono text-[9.5px] uppercase leading-tight tracking-[0.08em] sm:text-[10.5px]" style={{ color }}>
+                        {sponsorKind(c.sponsor, tierLabel)}
+                      </span>
                     </>
                   ) : (
-                    <span className="text-[13px] leading-tight text-muted">
+                    <span className="my-auto text-[13px] leading-tight text-muted">
                       <span className="block font-mono text-[10px] uppercase tracking-[0.08em]" style={{ color }}>
                         {tierLabel[c.tier]}
                       </span>
@@ -378,8 +374,10 @@ export function SponsorTiers({ sponsors }: { sponsors: Sponsor[] }) {
             <h3 className="eyebrow mb-4">{tierLabel[t]}</h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
               {list.map((s) => (
-                <a key={s.id} href={s.website ?? undefined} target="_blank" rel="noreferrer" className="glass card-lift grid h-28 place-items-center rounded-[20px] px-6">
-                  <LogoFace s={s} />
+                <a key={s.id} href={s.website ?? undefined} target="_blank" rel="noreferrer" className="glass card-lift flex flex-col items-center rounded-[20px] p-3 text-center">
+                  <LogoPlate s={s} w={148} h={84} radius={12} />
+                  <span className="mt-2 w-full truncate text-[14px] font-medium">{s.name}</span>
+                  <span className="w-full truncate font-mono text-[10px] uppercase tracking-[0.08em] text-muted">{sponsorKind(s, tierLabel)}</span>
                 </a>
               ))}
             </div>

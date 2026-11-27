@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase';
 import PartnerRequests from './PartnerRequests';
 import type { Edition, Sponsor, SponsorRequest } from '../../lib/types';
 import { tierLabel } from '../../sections/Sponsors';
+import LogoPlate, { sponsorKind } from '../../components/LogoPlate';
 import { deleteRow, ErrorLine, F, Panel, saveRow, shrinkImage, uploadFile, useTable } from './kit';
 
 const empty: Partial<Sponsor> = {
@@ -12,7 +13,25 @@ const empty: Partial<Sponsor> = {
   tier: 'partner',
   edition_id: null,
   sort: 0,
+  category: null,
+  logo_bg: 'light',
 };
+
+// suggestions only; any text works ("Food & Beverage" shows as "Food & Beverage sponsor")
+const CATEGORY_IDEAS = [
+  'Food & Beverage',
+  'Health',
+  'Banking & Finance',
+  'Technology',
+  'Education',
+  'Telecom',
+  'Media',
+  'Travel & Hospitality',
+  'Energy',
+  'Automobile',
+  'Retail',
+  'Insurance',
+];
 
 export default function SponsorsAdmin() {
   const { rows, refresh, error } = useTable<Sponsor>('sponsors');
@@ -43,7 +62,7 @@ export default function SponsorsAdmin() {
     setBusy(true);
     setMsg(null);
     try {
-      await saveRow('sponsors', { ...edit, website: edit.website || null });
+      await saveRow('sponsors', { ...edit, website: edit.website || null, category: edit.category?.trim() || null, logo_bg: edit.logo_bg ?? 'light' });
       if (fromRequest) {
         await supabase!.from('sponsor_requests').update({ status: 'accepted' }).eq('id', fromRequest);
         setReqVersion((v) => v + 1);
@@ -86,12 +105,18 @@ export default function SponsorsAdmin() {
                   <div className="min-w-0">
                     <p className="truncate font-medium">{s.name}</p>
                     <p className="truncate text-[13px] text-muted">
-                      {tierLabel[s.tier]} · {editions.find((e) => e.id === s.edition_id)?.title ?? 'Whole series'}
+                      {sponsorKind(s, tierLabel)} · {editions.find((e) => e.id === s.edition_id)?.title ?? 'Whole series'}
                     </p>
                   </div>
                 </div>
                 <div className="flex shrink-0 gap-2">
-                  <button className="btn btn-ghost h-9 px-3 text-[13px]" onClick={() => setEdit(s)}>
+                  <button
+                    className="btn btn-ghost h-9 px-3 text-[13px]"
+                    onClick={() => {
+                      setFromRequest(null);
+                      setEdit(s);
+                    }}
+                  >
                     Edit
                   </button>
                   <button
@@ -169,7 +194,29 @@ export default function SponsorsAdmin() {
               <F label="Order (lower first)">
                 <input className="field" type="number" value={edit.sort ?? 0} onChange={(e) => setEdit({ ...edit, sort: +e.target.value })} />
               </F>
-              <F label="Logo (SVG or transparent PNG)">
+              <F label="Category (optional)">
+                <input
+                  className="field"
+                  list="sponsor-categories"
+                  maxLength={40}
+                  placeholder="e.g. Food & Beverage"
+                  value={edit.category ?? ''}
+                  onChange={(e) => setEdit({ ...edit, category: e.target.value })}
+                />
+                <datalist id="sponsor-categories">
+                  {CATEGORY_IDEAS.map((c) => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+              </F>
+              <F label="Logo background">
+                <select className="field" value={edit.logo_bg ?? 'light'} onChange={(e) => setEdit({ ...edit, logo_bg: e.target.value as Sponsor['logo_bg'] })}>
+                  <option value="light">Light plate (for dark or coloured logos)</option>
+                  <option value="dark">Dark plate (for white logos)</option>
+                  <option value="none">No plate (transparent)</option>
+                </select>
+              </F>
+              <F label="Logo (PNG, SVG, JPG; wide logos look best)">
                 <input
                   className="field pt-2.5"
                   type="file"
@@ -191,7 +238,17 @@ export default function SponsorsAdmin() {
                 />
               </F>
             </div>
-            {edit.logo_url && <img src={edit.logo_url} alt="" className="mt-4 h-12 rounded bg-bg object-contain p-2" />}
+            {/* live preview, exactly as the card on the site shows it */}
+            <div className="mt-5 flex items-center gap-4 rounded-xl border border-line bg-bg/60 p-3">
+              <LogoPlate s={{ name: edit.name || 'Name', logo_url: edit.logo_url ?? null, logo_bg: edit.logo_bg ?? 'light' }} w={180} h={88} radius={12} />
+              <div className="min-w-0">
+                <p className="truncate font-medium">{edit.name || 'Sponsor name'}</p>
+                <p className="truncate font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
+                  {sponsorKind({ tier: edit.tier ?? 'sponsor', category: edit.category }, tierLabel)}
+                </p>
+                <p className="mt-1 text-[12px] text-muted">Preview of the sponsor card</p>
+              </div>
+            </div>
             <ErrorLine msg={msg} />
             <div className="mt-6 flex justify-end">
               <button className="btn btn-primary" onClick={save} disabled={busy}>

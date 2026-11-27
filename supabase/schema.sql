@@ -231,3 +231,7 @@ alter table public.private_settings enable row level security;
 drop policy if exists "admin all" on public.private_settings;
 create policy "admin all" on public.private_settings for all to authenticated
   using (public.is_admin()) with check (public.is_admin());
+
+-- Sponsor extras: optional category ("Food & Beverage" → "Food & Beverage sponsor") and logo plate colour.
+alter table public.sponsors add column if not exists category text check (category is null or char_length(category) <= 40);
+alter table public.sponsors add column if not exists logo_bg text not null default 'light' check (logo_bg in ('light','dark','none'));

@@ -40,6 +40,8 @@ export type Sponsor = {
   tier: SponsorTier;
   edition_id: string | null; // null = partner of the whole series
   sort: number;
+  category?: string | null; // optional, e.g. "Food & Beverage" → "Food & Beverage sponsor"
+  logo_bg?: 'light' | 'dark' | 'none'; // plate behind the logo
 };
 
 export type Media = {
