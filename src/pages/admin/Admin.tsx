@@ -138,6 +138,7 @@ export default function Admin() {
 function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [show, setShow] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   return (
@@ -158,10 +159,36 @@ function Login() {
           <span className="label">Email</span>
           <input className="field" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required />
         </label>
-        <label className="block">
-          <span className="label">Password</span>
-          <input className="field" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
-        </label>
+        <div>
+          <label className="label" htmlFor="admin-password">
+            Password
+          </label>
+          <div className="relative">
+            <input
+              id="admin-password"
+              className="field pr-12"
+              type={show ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              onClick={() => setShow((v) => !v)}
+              className="absolute right-1.5 top-1/2 grid h-10 w-10 -translate-y-1/2 cursor-pointer place-items-center rounded-lg text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-accent"
+              aria-label={show ? 'Hide password' : 'Show password'}
+              aria-pressed={show}
+              title={show ? 'Hide password' : 'Show password'}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12Z" />
+                <circle cx="12" cy="12" r="3" />
+                {show && <path d="M4 4l16 16" />}
+              </svg>
+            </button>
+          </div>
+        </div>
         {err && <p className="text-[14px] text-[#ff6b6b]">{err}</p>}
         <button className="btn btn-primary w-full" disabled={busy}>
           {busy ? 'Signing in…' : 'Sign in'}

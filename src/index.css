@@ -361,6 +361,7 @@ html.lenis body {
 .tv .tv-spin { animation: tv-spin 5s linear infinite; }
 .tv .tv-spin2 { animation: tv-spin 3.4s linear infinite reverse; }
 @keyframes tv-spin { to { transform: rotate(360deg); } }
+.tv .tv-spin, .tv .tv-spin2 { transform-box: fill-box; transform-origin: center; }
 
 @keyframes hero-progress { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 
@@ -475,3 +476,35 @@ html.lenis body {
   .si .si-paper { transform: translateY(14px) !important; }
 }
 .si-reveal, .si-judge { --c: var(--accent2); }
+
+/* extra track graphics */
+.tv .tv-glowp { animation: tv-glowp 2.4s ease-in-out infinite; }
+@keyframes tv-glowp { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+.tv .tv-grow { transform-box: fill-box; transform-origin: bottom; animation: tv-grow 3.2s cubic-bezier(.4,0,.2,1) infinite; }
+@keyframes tv-grow { 0% { transform: scaleY(0.1); } 45%, 85% { transform: scaleY(1); } 100% { transform: scaleY(0.1); } }
+.tv .tv-float { animation: tv-float 3s ease-in-out infinite; }
+@keyframes tv-float { 0%, 100% { transform: translateY(4px); } 50% { transform: translateY(-6px); } }
+.tv .tv-flame { transform-box: fill-box; transform-origin: top; animation: tv-flame 0.32s ease-in-out infinite alternate; }
+@keyframes tv-flame { from { transform: scaleY(0.7); opacity: 0.7; } to { transform: scaleY(1.25); opacity: 1; } }
+.tv .tv-pop { animation: tv-pop 4s cubic-bezier(.3,1.4,.5,1) infinite; }
+@keyframes tv-pop { 0%, 12% { transform: scale(0); } 30%, 88% { transform: scale(1); } 100% { transform: scale(0); } }
+.tv .tv-ping { transform-box: fill-box; transform-origin: center; animation: tv-ping 2.4s ease-out infinite; }
+@keyframes tv-ping { from { transform: scale(0.9); opacity: 0.8; } to { transform: scale(1.7); opacity: 0; } }
+.tv .tv-scany { animation: tv-scany 2.2s ease-in-out infinite; }
+@keyframes tv-scany { 0%, 100% { transform: translateY(0); opacity: 0.2; } 50% { transform: translateY(64px); opacity: 1; } }
+.tv .tv-up { animation: tv-up 1.8s linear infinite; }
+@keyframes tv-up { from { transform: translateY(6px); opacity: 0; } 30% { opacity: 1; } to { transform: translateY(-22px); opacity: 0; } }
+.tv .tv-down { animation: tv-down 1.8s linear infinite; }
+@keyframes tv-down { from { transform: translateY(-22px); opacity: 0; } 70% { opacity: 1; } to { transform: translateY(6px); opacity: 0; } }
+.tv .tv-write { stroke-dasharray: 1; stroke-dashoffset: 1; animation: tv-write 4.8s ease-in-out infinite; }
+@keyframes tv-write { 0% { stroke-dashoffset: 1; } 20%, 85% { stroke-dashoffset: 0; opacity: 1; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.tv .tv-roll { animation: tv-roll 4s ease-in-out infinite; }
+@keyframes tv-roll { 0%, 100% { transform: translateX(-18px); } 50% { transform: translateX(18px); } }
+.tv .tv-drop { animation: tv-drop 2s cubic-bezier(.5,0,.6,1.4) infinite; }
+@keyframes tv-drop { 0% { transform: translateY(-50px); opacity: 0; } 40% { transform: translateY(0); opacity: 1; } 85% { opacity: 1; } 100% { opacity: 0; } }
+.tv .tv-meridian { transform-box: fill-box; transform-origin: center; animation: tv-meridian 3s linear infinite; }
+@keyframes tv-meridian { 0% { transform: scaleX(1); } 50% { transform: scaleX(0.05); } 100% { transform: scaleX(1); } }
+.tv .tv-flicker { animation: tv-flicker 2.6s steps(1) infinite; }
+@keyframes tv-flicker { 0%, 100% { opacity: 1; } 6% { opacity: 0.4; } 8% { opacity: 1; } 10% { opacity: 0.55; } 12% { opacity: 1; } }
+.tv .tv-charge { transform-box: fill-box; transform-origin: left; animation: tv-charge 3s ease-in-out infinite; }
+@keyframes tv-charge { 0% { transform: scaleX(0.08); } 80%, 100% { transform: scaleX(1); } }

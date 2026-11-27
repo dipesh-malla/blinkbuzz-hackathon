@@ -53,7 +53,23 @@ export type Media = {
   sort: number;
 };
 
-export type TrackVisual = 'neural' | 'candles' | 'pulse' | 'arm' | 'chain' | 'orbit';
+export type TrackVisual =
+  | 'neural'
+  | 'candles'
+  | 'pulse'
+  | 'arm'
+  | 'chain'
+  | 'orbit'
+  | 'idea'
+  | 'rocket'
+  | 'leaf'
+  | 'shield'
+  | 'cloud'
+  | 'book'
+  | 'cart'
+  | 'globe'
+  | 'bolt'
+  | 'people';
 
 /** An innovation category. Lights up a region of the hero brain. */
 export type Track = {

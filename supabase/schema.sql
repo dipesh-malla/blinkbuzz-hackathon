@@ -67,7 +67,7 @@ create table if not exists public.tracks (
   name text not null,
   blurb text not null default '',
   color text not null default '#22e4ff',
-  visual text not null default 'neural' check (visual in ('neural','candles','pulse','arm','chain','orbit')),
+  visual text not null default 'neural' check (visual in ('neural','candles','pulse','arm','chain','orbit','idea','rocket','leaf','shield','cloud','book','cart','globe','bolt','people')),
   sort int not null default 0
 );
 

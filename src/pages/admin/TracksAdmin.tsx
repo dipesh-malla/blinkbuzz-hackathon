@@ -10,6 +10,16 @@ const visuals: { id: TrackVisual; label: string }[] = [
   { id: 'arm', label: 'Robot arm' },
   { id: 'chain', label: 'Linked blocks' },
   { id: 'orbit', label: 'Orbit' },
+  { id: 'idea', label: 'Idea → business (bulb to growth)' },
+  { id: 'rocket', label: 'Startup launch (rocket)' },
+  { id: 'leaf', label: 'Agri / sustainability (sprout)' },
+  { id: 'shield', label: 'Cybersecurity (shield & lock)' },
+  { id: 'cloud', label: 'Cloud & data (syncing)' },
+  { id: 'book', label: 'EdTech (book & cap)' },
+  { id: 'cart', label: 'E-commerce (cart & parcels)' },
+  { id: 'globe', label: 'Travel / global (globe & plane)' },
+  { id: 'bolt', label: 'Energy (bolt & battery)' },
+  { id: 'people', label: 'Social impact (people network)' },
 ];
 
 export default function TracksAdmin() {
