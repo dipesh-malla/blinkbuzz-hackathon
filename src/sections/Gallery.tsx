@@ -5,6 +5,10 @@ import { Section } from '../components/ui';
 import CurvedGallery, { CURVE_MIN_PHOTOS, CURVE_PRESETS, presetById } from '../components/CurvedGallery';
 import { useSite } from '../lib/store';
 import { isDemo } from '../lib/supabase';
+import { demoMedia } from '../lib/demo';
+
+/** The curved gallery is topped up with artwork to at least this many cards. */
+const FILL_TO = 9;
 import { youtubeId } from '../lib/data';
 import { prefersReducedMotion, stopScroll } from '../hooks/useSmoothScroll';
 import type { Media } from '../lib/types';
@@ -248,14 +252,19 @@ function EditionSelect({ value, onChange, options }: { value: string; onChange: 
 
 export default function Gallery() {
   const { media, editions, settings } = useSite();
-  const withMedia = useMemo(() => editions.filter((e) => media.some((m) => m.edition_id === e.id && m.kind === 'image')), [editions, media]);
+  // editions listed in the dropdown: any that has photos, plus every edition that isn't just planned
+  const withMedia = useMemo(() => editions.filter((e) => e.status !== 'planned' || media.some((m) => m.edition_id === e.id && m.kind === 'image')), [editions, media]);
   const [filter, setFilter] = useState<string>('all');
   // default perspective comes from Admin → Settings; visitors can switch it (?gallery=deep previews one)
   const initial = (typeof location !== 'undefined' && new URLSearchParams(location.search).get('gallery')) || settings.galleryStyle;
   const [styleId, setStyleId] = useState<string>(presetById(initial).id);
   const preset = presetById(styleId);
   const shown = media.filter((m) => filter === 'all' || m.edition_id === filter);
-  const images = shown.filter((m) => m.kind === 'image');
+  const real = shown.filter((m) => m.kind === 'image');
+  // Until there are enough event photos, coloured artwork fills the curve so the
+  // gallery always looks complete. Real photos always come first.
+  const filler = real.length < FILL_TO ? (isDemo ? [] : demoMedia.slice(0, FILL_TO - real.length).map((m) => ({ ...m, id: `art-${m.id}`, alt: 'BlinkBuzz artwork' }))) : [];
+  const images = isDemo ? real : [...real, ...filler];
   const videos = shown.filter((m) => m.kind === 'video');
   const count = (id: string) => media.filter((m) => m.kind === 'image' && (id === 'all' || m.edition_id === id)).length;
   const curved = images.length >= CURVE_MIN_PHOTOS;
@@ -277,7 +286,11 @@ export default function Gallery() {
             </div>
           )}
         </div>
-        {isDemo && media.length > 0 && <p className="mt-4 font-mono text-[12px] text-muted">Demo artwork. Your event photos replace it once you upload them in Admin.</p>}
+        {(isDemo || filler.length > 0) && (
+          <p className="mt-4 font-mono text-[12px] text-muted">
+            {real.length ? 'Event photos first; artwork fills the rest until more are added.' : 'Artwork for now. Event photos appear here as they are added.'}
+          </p>
+        )}
 
         {/* perspective picker */}
         {curved && (
@@ -305,7 +318,7 @@ export default function Gallery() {
         )}
       </div>
 
-      {media.length === 0 ? (
+      {images.length === 0 && videos.length === 0 ? (
         <div className="wrap">
           <div data-reveal className="glass mt-12 grid min-h-[44svh] place-items-center rounded-[28px] p-8 text-center">
             <p className="mx-auto max-w-[26ch] text-[clamp(24px,3vw,36px)] font-medium tracking-[-0.02em]">The first photos land here after hack day.</p>
