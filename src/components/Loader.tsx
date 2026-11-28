@@ -4,14 +4,21 @@ import { prefersReducedMotion } from '../hooks/useSmoothScroll';
 import { useSite } from '../lib/store';
 import { Mark } from './Nav';
 
-// Shown once per browser session. Resolves `loaderDone` when it lifts.
+// Shown only on a visitor's first visit (kept short). Resolves `loaderDone` when it lifts.
+function seen() {
+  try {
+    return localStorage.getItem('loader-seen') === '1';
+  } catch {
+    return false;
+  }
+}
 let resolveDone: () => void;
 export const loaderDone = new Promise<void>((r) => (resolveDone = r));
 
 export default function Loader() {
   const { brand } = useSite();
   const [show] = useState(() => {
-    const skip = prefersReducedMotion() || sessionStorage.getItem('loader-seen') === '1';
+    const skip = prefersReducedMotion() || seen();
     if (skip) queueMicrotask(() => resolveDone());
     return !skip;
   });
@@ -22,7 +29,11 @@ export default function Loader() {
 
   useEffect(() => {
     if (!show) return;
-    sessionStorage.setItem('loader-seen', '1');
+    try {
+      localStorage.setItem('loader-seen', '1');
+    } catch {
+      /* private mode */
+    }
     const counter = { v: 0 };
     const tl = gsap.timeline({
       onComplete: () => {
@@ -31,7 +42,7 @@ export default function Loader() {
     });
     tl.to(counter, {
       v: 100,
-      duration: 1.3,
+      duration: 0.75,
       ease: 'power2.inOut',
       onUpdate: () => {
         if (num.current) num.current.textContent = String(Math.round(counter.v)).padStart(3, '0');
@@ -39,7 +50,7 @@ export default function Loader() {
       },
     })
       .add(() => resolveDone(), '-=0.05')
-      .to(root.current, { yPercent: -100, duration: 0.9, ease: 'expo.inOut' });
+      .to(root.current, { yPercent: -100, duration: 0.65, ease: 'expo.inOut' });
     return () => {
       tl.kill();
     };

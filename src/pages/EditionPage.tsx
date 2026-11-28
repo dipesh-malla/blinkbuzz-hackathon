@@ -12,6 +12,7 @@ import { FlipGallery, VideoGrid } from '../sections/Gallery';
 import { SponsorTiers } from '../sections/Sponsors';
 import { prefersReducedMotion, useSmoothScroll } from '../hooks/useSmoothScroll';
 import { OG_IMAGE, SITE_URL, useSeo } from '../lib/seo';
+import { PageSkeleton } from '../components/Skeleton';
 
 const statusText = { planned: 'Planned', upcoming: 'Next up', live: 'Live now', completed: 'Completed' } as const;
 
@@ -73,7 +74,7 @@ export default function EditionPage() {
     { dependencies: [e?.id, loading] },
   );
 
-  if (loading) return <div className="grid min-h-svh place-items-center text-muted">Loading…</div>;
+  if (loading) return <PageSkeleton />;
   if (!e)
     return (
       <>

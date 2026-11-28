@@ -25,16 +25,34 @@ type SiteData = {
 
 const Ctx = createContext<SiteData | null>(null);
 
+// Stale-while-revalidate: the last data we saw is kept in localStorage, so a returning
+// visitor sees the full page instantly while fresh data loads quietly in the background.
+const CACHE_KEY = 'bb-data-v1';
+type Snapshot = Pick<SiteData, 'editions' | 'sponsors' | 'media' | 'faqs' | 'tracks' | 'settings'>;
+function readCache(): Snapshot | null {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const v = JSON.parse(raw) as Snapshot & { v?: number };
+    return Array.isArray(v.editions) ? v : null;
+  } catch {
+    return null;
+  }
+}
+function writeCache(s: Snapshot) {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(s));
+  } catch {
+    /* storage full or private mode */
+  }
+}
+
 export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<Omit<SiteData, 'reload' | 'brand' | 'headline' | 'tagline' | 'contactEmail' | 'sponsorEmail' | 'logoUrl' | 'current'>>({
-    loading: true,
-    error: null,
-    editions: [],
-    sponsors: [],
-    media: [],
-    faqs: [],
-    tracks: [],
-    settings: {},
+  const [state, setState] = useState<Omit<SiteData, 'reload' | 'brand' | 'headline' | 'tagline' | 'contactEmail' | 'sponsorEmail' | 'logoUrl' | 'current'>>(() => {
+    const cached = readCache();
+    return cached
+      ? { loading: false, error: null, ...cached }
+      : { loading: true, error: null, editions: [], sponsors: [], media: [], faqs: [], tracks: [], settings: {} };
   });
 
   const load = useCallback(async () => {
@@ -55,9 +73,13 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
         /* private mode */
       }
       setState({ loading: false, error: null, editions, sponsors, media, faqs, tracks, settings });
+      writeCache({ editions, sponsors, media, faqs, tracks, settings });
     } catch (e) {
-      applyTheme(parseTheme({}, site.palette));
-      setState((s) => ({ ...s, loading: false, error: (e as Error).message }));
+      // keep showing cached data if we have it; only report the error on an empty page
+      setState((s) => {
+        if (!s.editions.length) applyTheme(parseTheme({}, site.palette));
+        return { ...s, loading: false, error: s.editions.length ? null : (e as Error).message };
+      });
     }
   }, []);
 

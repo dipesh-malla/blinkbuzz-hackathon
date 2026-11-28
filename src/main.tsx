@@ -23,3 +23,10 @@ createRoot(document.getElementById('root')!).render(
     )}
   </StrictMode>,
 );
+
+// Offline-friendly caching for repeat visits (see public/sw.js). Production builds only.
+if (import.meta.env.PROD && 'serviceWorker' in navigator && import.meta.env.VITE_ROUTER !== 'hash') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register(`${import.meta.env.BASE_URL}sw.js`, { scope: import.meta.env.BASE_URL }).catch(() => {});
+  });
+}

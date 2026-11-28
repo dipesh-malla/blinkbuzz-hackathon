@@ -13,6 +13,7 @@ import Sponsors from '../sections/Sponsors';
 import Faq from '../sections/Faq';
 import Register from '../sections/Register';
 import Footer from '../sections/Footer';
+import { SectionsSkeleton } from '../components/Skeleton';
 import { scrollToId, useSmoothScroll } from '../hooks/useSmoothScroll';
 import { hasWebGL, useMediaQuery } from '../hooks/usePalette';
 import { useSite } from '../lib/store';
@@ -82,6 +83,7 @@ export default function Home() {
       <main className="relative z-[1]">
         <Hero />
         {error && <div className="wrap py-6 text-[14px] text-[#ff6b6b]">Couldn’t load the latest event data ({error}). Please refresh.</div>}
+        {loading && !error && <SectionsSkeleton />}
         {!loading && (
           <>
             <HowItWorks gl={gl} />

@@ -1,13 +1,13 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { View } from '@react-three/drei';
-import Terrain from '../components/three/Terrain';
 import Stepper, { Step } from '../components/reactbits/Stepper';
 import { Arrow, Fact, useReveal } from '../components/ui';
 import { useSite } from '../lib/store';
 import { feeLabel, newId, submitRegistration, teamLabel } from '../lib/data';
 import { useMediaQuery, usePalette } from '../hooks/usePalette';
 import type { Member, Registration } from '../lib/types';
+
+const RegisterTerrain = lazy(() => import('../components/three/RegisterTerrain'));
 
 const emptyMember = (): Member => ({ name: '', email: '', phone: '', grade: '' });
 const DRAFT_KEY = 'reg-draft-v1';
@@ -153,9 +153,9 @@ export default function Register({ gl }: { gl: boolean }) {
     <section id="register" ref={sec} className="relative overflow-hidden py-[clamp(80px,12vh,140px)]">
       {/* 3D data landscape behind the panel */}
       {gl && (
-        <View className="!pointer-events-none absolute inset-0">
-          <Terrain palette={palette} lowPower={mobileGl} />
-        </View>
+        <Suspense fallback={null}>
+          <RegisterTerrain palette={palette} lowPower={mobileGl} />
+        </Suspense>
       )}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(80%_60%_at_20%_40%,var(--bg)_10%,transparent_70%)]" aria-hidden />
       <div className="wrap relative grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10">
