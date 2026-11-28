@@ -11,6 +11,7 @@ import { feeLabel, formatDate, teamLabel } from '../lib/data';
 import { FlipGallery, VideoGrid } from '../sections/Gallery';
 import { SponsorTiers } from '../sections/Sponsors';
 import { prefersReducedMotion, useSmoothScroll } from '../hooks/useSmoothScroll';
+import { OG_IMAGE, SITE_URL, useSeo } from '../lib/seo';
 
 const statusText = { planned: 'Planned', upcoming: 'Next up', live: 'Live now', completed: 'Completed' } as const;
 
@@ -22,6 +23,47 @@ export default function EditionPage() {
   const line = useRef<HTMLSpanElement>(null);
   const list = useRef<HTMLOListElement>(null);
   const e = editions.find((x) => x.slug === slug);
+
+  const seoTitle = e ? `${e.title}${e.industry ? ` · ${e.industry}` : ''} | BlinkBuzz Hackathon Nepal` : 'Edition | BlinkBuzz Hackathon Nepal';
+  const seoDesc = e
+    ? `BlinkBuzz Hackathon ${e.title}${e.venue ? ` at ${e.venue}` : ''}${e.starts_at ? `, ${formatDate(e.starts_at)}` : ''}. ${e.audience}. Teams of ${teamLabel(e.team_min, e.team_max)}, ${feeLabel(e.fee_npr).toLowerCase()}. One real industry problem, one day to build the answer.`
+    : 'A BlinkBuzz Hackathon edition in Nepal.';
+  useSeo({
+    title: seoTitle,
+    description: seoDesc.slice(0, 300),
+    path: `/edition/${slug ?? ''}/`,
+    noindex: !loading && !e,
+    // Google shows event rich results only when there is a start date
+    jsonLd:
+      e && e.starts_at
+        ? {
+            '@context': 'https://schema.org',
+            '@type': 'Event',
+            name: `BlinkBuzz Hackathon ${e.title}${e.industry ? ` · ${e.industry}` : ''}`,
+            description: seoDesc,
+            startDate: e.starts_at,
+            endDate: e.ends_at ?? e.starts_at,
+            eventStatus: 'https://schema.org/EventScheduled',
+            eventAttendanceMode: 'https://schema.org/OfflineEventAttendanceMode',
+            image: [OG_IMAGE],
+            url: `${SITE_URL}/edition/${e.slug}/`,
+            location: {
+              '@type': 'Place',
+              name: e.venue ?? 'Kathmandu',
+              address: { '@type': 'PostalAddress', addressLocality: 'Kathmandu', addressCountry: 'NP' },
+            },
+            organizer: { '@type': 'Organization', name: 'BlinkBuzz', url: SITE_URL },
+            offers: {
+              '@type': 'Offer',
+              price: e.fee_npr,
+              priceCurrency: 'NPR',
+              availability: e.registration_open ? 'https://schema.org/InStock' : 'https://schema.org/SoldOut',
+              url: `${SITE_URL}/#register`,
+              ...(e.registration_closes ? { validThrough: e.registration_closes } : {}),
+            },
+          }
+        : null,
+  });
 
   useGSAP(
     () => {

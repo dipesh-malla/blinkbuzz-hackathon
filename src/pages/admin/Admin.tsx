@@ -1,3 +1,4 @@
+import { useSeo } from '../../lib/seo';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
@@ -45,6 +46,7 @@ function Shell({ children, onSignOut }: { children: React.ReactNode; onSignOut?:
 }
 
 export default function Admin() {
+  useSeo({ title: 'Admin | BlinkBuzz', description: 'Organiser area.', path: '/admin', noindex: true });
   const [session, setSession] = useState<Session | null>(null);
   const [checking, setChecking] = useState(true);
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);

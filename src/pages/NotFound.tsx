@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 
+import { useSeo } from '../lib/seo';
+
 export default function NotFound() {
+  useSeo({ title: 'Page not found | BlinkBuzz Hackathon', description: 'This page does not exist.', path: '/404', noindex: true });
   return (
     <div className="wrap grid min-h-svh place-items-center text-center">
       <div>
