@@ -28,7 +28,7 @@ export default function Editions() {
   const done = editions.filter((e) => e.status === 'completed').length;
 
   return (
-    <Section id="orbit" tag="Every edition">
+    <Section id="orbit" tag="Every edition" className="gl-zone">
       <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
           <h2 data-reveal className="h-section">

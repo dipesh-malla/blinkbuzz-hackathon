@@ -8,7 +8,7 @@ export const site = {
   seriesName: 'BlinkBuzz Hackathon',
   headline: 'Where Nepal’s next ideas get wired.',
   tagline:
-    'A hackathon series by BlinkBuzz. Every edition, one real industry brings one real problem, and students spend the day building answers to it.',
+    'A hackathon series by BlinkBuzz. Every edition, one real industry brings one real problem, and teams spend the day building answers to it.',
   palette: 'blinkbuzz',
   contactEmail: 'hello@blinkbuzz.example',
   sponsorEmail: 'partners@blinkbuzz.example',

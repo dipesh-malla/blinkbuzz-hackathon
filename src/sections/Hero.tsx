@@ -2,6 +2,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap';
 import { loaderDone } from '../components/Loader';
 import TrackViz from '../components/TrackViz';
+import Countdown, { editionEnd, editionStart } from '../components/Countdown';
 import { hasWebGL, useInView, useMediaQuery, usePalette } from '../hooks/usePalette';
 import { prefersReducedMotion, scrollToId } from '../hooks/useSmoothScroll';
 import { useSite } from '../lib/store';
@@ -24,7 +25,8 @@ export default function Hero() {
   const root = useRef<HTMLElement>(null);
   const cardA = useRef<HTMLDivElement>(null);
   const cardB = useRef<HTMLDivElement>(null);
-  const inView = useInView(root, '0px');
+  // the brain pauses once most of the hero has scrolled away, so scrolling the page stays light
+  const inView = useInView(root, '-30% 0px 0px 0px');
   const mobile = useMediaQuery('(max-width: 767px)');
   const [gl] = useState(hasWebGL);
   const [ready, setReady] = useState(false);
@@ -47,7 +49,8 @@ export default function Hero() {
         gsap.set(els, { opacity: 1 });
         return;
       }
-      gsap.fromTo(els, { opacity: 0, y: 28, filter: 'blur(8px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.2, ease: 'expo.out', stagger: 0.08, delay: 0.35 });
+      // transform + opacity only: animating a blur filter on big text is expensive
+      gsap.fromTo(els, { opacity: 0, y: 28 }, { opacity: 1, y: 0, duration: 1.1, ease: 'expo.out', stagger: 0.08, delay: 0.3, clearProps: 'transform' });
     });
     return () => {
       alive = false;
@@ -65,7 +68,7 @@ export default function Hero() {
   useEffect(() => {
     if (!ready || prefersReducedMotion()) return;
     const els = [cardA.current, cardB.current].filter(Boolean);
-    gsap.fromTo(els, { opacity: 0, y: 10, filter: 'blur(6px)' }, { opacity: 1, y: 0, filter: 'blur(0px)', duration: 0.6, ease: 'power3.out', stagger: 0.06 });
+    gsap.fromTo(els, { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.5, ease: 'power3.out', stagger: 0.06 });
   }, [active, ready]);
 
   const pick = useCallback((i: number) => setActive(i), []);
@@ -76,12 +79,16 @@ export default function Hero() {
   };
 
   const open = current?.registration_open;
+  // the countdown appears once the current edition has a start date (Admin → Editions)
+  const startAt = editionStart(current);
+  const endAt = editionEnd(current);
+  const timer = !!current && !!startAt && current.show_countdown !== false && (!endAt || Date.now() < endAt);
   const words = headline.split(' ');
   const tail = words.length > 2 ? words.slice(-2).join(' ') : '';
   const lead = tail ? words.slice(0, -2).join(' ') : headline;
 
   return (
-    <section ref={root} id="top" className="relative isolate min-h-[100svh] overflow-hidden" aria-label="Introduction">
+    <section ref={root} id="top" className="gl-zone relative isolate min-h-[100svh] overflow-hidden" aria-label="Introduction">
       {/* the scene */}
       <div className="absolute inset-0 -z-10">
         {gl ? (
@@ -96,9 +103,9 @@ export default function Hero() {
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-bg to-transparent" />
       </div>
 
-      <div className="wrap pointer-events-none relative flex min-h-[100svh] flex-col justify-end pb-8 pt-[calc(var(--nav-h)+24px)] wide:justify-center wide:pb-24">
+      <div className={`wrap pointer-events-none relative flex min-h-[100svh] flex-col justify-end pb-8 pt-[calc(var(--nav-h)+24px)] wide:justify-center ${timer ? 'wide:pb-12' : 'wide:pb-24'}`}>
         <div className="pointer-events-auto max-w-[640px] tall:mt-[42svh] wide:max-xl:max-w-[54%]">
-          <div data-enter className="inline-flex items-center gap-2 rounded-full border border-line bg-bg/40 py-1.5 pl-2 pr-3 backdrop-blur-md">
+          <div data-enter className="inline-flex items-center gap-2 rounded-full border border-line bg-bg/75 py-1.5 pl-2 pr-3">
             <span className="relative flex h-2 w-2">
               {open && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-hot opacity-70" />}
               <span className="relative inline-flex h-2 w-2 rounded-full bg-hot" />
@@ -108,14 +115,21 @@ export default function Hero() {
             </span>
           </div>
 
-          <h1 data-enter className="h-display mt-6 text-[clamp(42px,6.4vw,96px)] [text-wrap:balance]">
+          <h1 data-enter className={`h-display mt-6 [text-wrap:balance] ${timer ? 'text-[clamp(40px,5.6vw,84px)]' : 'text-[clamp(42px,6.4vw,96px)]'}`}>
             {lead} {tail && <span className="grad-text">{tail}</span>}
           </h1>
-          <p data-enter className="mt-6 max-w-[44ch] text-[16px] text-ink/70 md:text-[17px]">
+          <p data-enter className={`${timer ? 'mt-5' : 'mt-6'} max-w-[44ch] text-[16px] text-ink/70 md:text-[17px]`}>
             {tagline}
           </p>
 
-          <div data-enter className="mt-9 flex flex-wrap items-center gap-3">
+          {timer && current && (
+            // not data-enter: data can arrive after the entrance ran, so it fades in by itself
+            <div className="cd-in mt-7">
+              <Countdown edition={current} />
+            </div>
+          )}
+
+          <div data-enter className={`${timer ? 'mt-7' : 'mt-9'} flex flex-wrap items-center gap-3`}>
             <button onClick={() => scrollToId('register')} className="btn btn-primary btn-orb h-[52px] pr-6">
               <span className="orb">
                 <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
@@ -130,8 +144,8 @@ export default function Hero() {
           </div>
 
           {/* track chips: tap to light a region */}
-          <div data-enter className="mt-10 wide:mt-14">
-            <p className="eyebrow mb-3">Tap a track to light it up</p>
+          <div data-enter className={timer ? 'mt-7 wide:mt-9 short:hidden' : 'mt-10 wide:mt-14'}>
+            <p className={`eyebrow mb-3 ${timer ? 'max-md:hidden' : ''}`}>Tap a track to light it up</p>
             <div className="flex flex-wrap gap-2" role="tablist" aria-label="Innovation tracks">
               {list.map((tr, i) => (
                 <button

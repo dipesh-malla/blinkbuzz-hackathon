@@ -105,8 +105,8 @@ export default function RegistrationsAdmin() {
                   ))}
                 </td>
                 <td className="px-5 py-3 md:px-6">
-                  {r.guardian_name}
-                  <div className="text-muted">{r.guardian_phone}</div>
+                  {r.guardian_name ?? <span className="text-muted">Not needed</span>}
+                  {r.guardian_phone && <div className="text-muted">{r.guardian_phone}</div>}
                 </td>
                 <td className="px-5 py-3 text-muted md:px-6">{r.created_at ? new Date(r.created_at).toLocaleDateString('en-GB') : ''}</td>
                 <td className="px-5 py-3 md:px-6">

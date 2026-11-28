@@ -17,7 +17,7 @@ const isPhone = (s: string) => /^(\+?977[-\s]?)?9[678]\d{8}$/.test(s.replace(/[\
 
 const districts = ['Kathmandu', 'Lalitpur', 'Bhaktapur', 'Kavrepalanchok', 'Chitwan', 'Kaski', 'Morang', 'Sunsari', 'Rupandehi', 'Jhapa'];
 
-type Draft = Omit<Registration, 'edition_id'>;
+type Draft = Omit<Registration, 'edition_id' | 'guardian_name' | 'guardian_phone'> & { guardian_name: string; guardian_phone: string };
 
 function Field({
   label,
@@ -45,6 +45,13 @@ export default function Register({ gl }: { gl: boolean }) {
   const minM = Math.max(1, e?.team_min ?? 1);
   const maxM = Math.max(minM, e?.team_max ?? 1);
   const isTeam = maxM > 1;
+  // who can join is set per edition (admin → Editions): its own levels and whether a guardian is needed
+  const levels = (e?.participant_levels ?? '')
+    .split(',')
+    .map((x) => x.trim())
+    .filter(Boolean);
+  const levelLabel = levels.length && levels.every((l) => /^grade\b/i.test(l)) ? 'Grade' : 'Level, year or role';
+  const guardian = !!e?.needs_guardian;
 
   const [step, setStep] = useState(1);
   const [tried, setTried] = useState(false);
@@ -98,13 +105,15 @@ export default function Register({ gl }: { gl: boolean }) {
       if (m.name.trim().length < 2) er[`m${i}name`] = 'Full name, please.';
       if (!isEmail(m.email)) er[`m${i}email`] = 'A valid email address.';
       if (!isPhone(m.phone)) er[`m${i}phone`] = 'A 10-digit Nepal mobile number.';
-      if (!m.grade) er[`m${i}grade`] = 'Pick a grade.';
+      if (!m.grade.trim()) er[`m${i}grade`] = levels.length ? 'Pick one.' : 'Add your level, year or role.';
     });
-    if (d.guardian_name.trim().length < 2) er.guardian_name = 'Parent or guardian’s name.';
-    if (!isPhone(d.guardian_phone)) er.guardian_phone = 'A 10-digit Nepal mobile number.';
-    if (!d.consent) er.consent = 'A guardian needs to agree before you can join.';
+    if (guardian) {
+      if (d.guardian_name.trim().length < 2) er.guardian_name = 'Parent or guardian’s name.';
+      if (!isPhone(d.guardian_phone)) er.guardian_phone = 'A 10-digit Nepal mobile number.';
+    }
+    if (!d.consent) er.consent = guardian ? 'A guardian needs to agree before you can join.' : 'Please agree before you submit.';
     return er;
-  }, [d, isTeam]);
+  }, [d, isTeam, guardian, levels.length]);
 
   const stepKeys: Record<number, (k: string) => boolean> = {
     1: (k) => ['team_name', 'school', 'district'].includes(k),
@@ -129,7 +138,14 @@ export default function Register({ gl }: { gl: boolean }) {
     setSending(true);
     setSendError(null);
     try {
-      await submitRegistration({ ...d, id: regId.current, edition_id: e.id, team_name: isTeam ? d.team_name : d.members[0].name });
+      await submitRegistration({
+        ...d,
+        id: regId.current,
+        edition_id: e.id,
+        team_name: isTeam ? d.team_name : d.members[0].name,
+        guardian_name: guardian ? d.guardian_name : null,
+        guardian_phone: guardian ? d.guardian_phone : null,
+      });
       setDone(true);
       setStep(5);
       try {
@@ -150,7 +166,7 @@ export default function Register({ gl }: { gl: boolean }) {
   if (!e) return null;
 
   return (
-    <section id="register" ref={sec} className="relative overflow-hidden py-[clamp(80px,12vh,140px)]">
+    <section id="register" ref={sec} className="gl-zone relative overflow-hidden py-[clamp(80px,12vh,140px)]">
       {/* 3D data landscape behind the panel */}
       {gl && (
         <Suspense fallback={null}>
@@ -175,7 +191,7 @@ export default function Register({ gl }: { gl: boolean }) {
             )}
           </h2>
           <p data-reveal className="mt-5 max-w-[40ch] text-[17px] text-muted">
-            Four short steps: your team, its members, a guardian, then a check. Your answers are saved on this device as you go.
+            Four short steps: your team, its members, {guardian ? 'a guardian' : 'a quick agreement'}, then a check. Your answers are saved on this device as you go.
           </p>
           <div data-reveal className="mt-8 flex flex-wrap items-center gap-2">
             {[teamLabel(e.team_min, e.team_max), feeLabel(e.fee_npr)].map((x) => (
@@ -226,7 +242,7 @@ export default function Register({ gl }: { gl: boolean }) {
                   <div className="py-10 text-center" role="status">
                     <p className="eyebrow text-accent">Registered</p>
                     <p className="mx-auto mt-4 max-w-[22ch] text-[28px] font-medium tracking-[-0.02em]">
-                      {isTeam ? `${d.team_name} is in.` : 'You’re in.'} See you at {e.venue?.split(',')[0] ?? 'the venue'}.
+                      {isTeam ? `${d.team_name} is in.` : 'You’re in.'} {e.venue ? `See you at ${e.venue.split(',')[0]}.` : 'We’ll send the venue soon.'}
                     </p>
                     <p className="mx-auto mt-3 max-w-[40ch] text-muted">We’ll email every member with the problem-day details.</p>
                   </div>
@@ -241,7 +257,7 @@ export default function Register({ gl }: { gl: boolean }) {
                         </Field>
                       </div>
                     )}
-                    <Field label="School or college" error={err('school')}>
+                    <Field label={guardian ? 'School' : 'School, college or organisation'} error={err('school')}>
                       <input className="field" value={d.school} aria-invalid={!!err('school')} onChange={(x) => setD({ ...d, school: x.target.value })} autoComplete="organization" />
                     </Field>
                     <Field label="District" error={err('district')}>
@@ -266,14 +282,24 @@ export default function Register({ gl }: { gl: boolean }) {
                           <Field label="Full name" error={err(`m${i}name`)}>
                             <input className="field" value={m.name} aria-invalid={!!err(`m${i}name`)} onChange={(x) => setMember(i, { name: x.target.value })} autoComplete={i === 0 ? 'name' : 'off'} />
                           </Field>
-                          <Field label="Grade" error={err(`m${i}grade`)}>
-                            <select className="field" value={m.grade} aria-invalid={!!err(`m${i}grade`)} onChange={(x) => setMember(i, { grade: x.target.value })}>
-                              <option value="">Select</option>
-                              <option>Grade 9</option>
-                              <option>Grade 10</option>
-                              <option>Grade 11</option>
-                              <option>Grade 12</option>
-                            </select>
+                          <Field label={levelLabel} error={err(`m${i}grade`)}>
+                            {levels.length ? (
+                              <select className="field" value={m.grade} aria-invalid={!!err(`m${i}grade`)} onChange={(x) => setMember(i, { grade: x.target.value })}>
+                                <option value="">Select</option>
+                                {levels.map((l) => (
+                                  <option key={l}>{l}</option>
+                                ))}
+                              </select>
+                            ) : (
+                              <input
+                                className="field"
+                                value={m.grade}
+                                placeholder="e.g. BSc IT, year 2"
+                                aria-invalid={!!err(`m${i}grade`)}
+                                onChange={(x) => setMember(i, { grade: x.target.value })}
+                                maxLength={60}
+                              />
+                            )}
                           </Field>
                           <Field label="Email" error={err(`m${i}email`)}>
                             <input className="field" type="email" inputMode="email" value={m.email} aria-invalid={!!err(`m${i}email`)} onChange={(x) => setMember(i, { email: x.target.value })} autoComplete={i === 0 ? 'email' : 'off'} />
@@ -297,18 +323,24 @@ export default function Register({ gl }: { gl: boolean }) {
                   </div>
                 </Step>
 
-                <Step title="Guardian">
+                <Step title={guardian ? 'Guardian' : 'Agree'}>
                   <div className="grid grid-cols-1 gap-4 pt-6 sm:grid-cols-2">
+                    {guardian && (
+                      <>
                     <Field label="Parent or guardian’s name" error={err('guardian_name')}>
                       <input className="field" value={d.guardian_name} aria-invalid={!!err('guardian_name')} onChange={(x) => setD({ ...d, guardian_name: x.target.value })} />
                     </Field>
                     <Field label="Guardian’s mobile" error={err('guardian_phone')}>
                       <input className="field" type="tel" inputMode="tel" placeholder="98XXXXXXXX" value={d.guardian_phone} aria-invalid={!!err('guardian_phone')} onChange={(x) => setD({ ...d, guardian_phone: x.target.value })} />
                     </Field>
+                      </>
+                    )}
                     <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-line p-4 sm:col-span-2">
                       <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-[var(--accent)]" checked={d.consent} onChange={(x) => setD({ ...d, consent: x.target.checked })} />
                       <span className="text-[15px]">
-                        My parent or guardian agrees to my taking part in {e.title} at {e.venue ?? 'the venue'}, and to being contacted on the day.
+                        {guardian
+                          ? `My parent or guardian agrees to my taking part in ${e.title}${e.venue ? ` at ${e.venue}` : ''}, and to being contacted on the day.`
+                          : `${isTeam ? 'Everyone on our team agrees' : 'I agree'} to take part in ${e.title}, to follow the event rules, and to be contacted by BlinkBuzz about it.`}
                         {err('consent') && <span className="mt-1.5 block text-[13px] text-[#ff6b6b]">{err('consent')}</span>}
                       </span>
                     </label>
@@ -319,11 +351,11 @@ export default function Register({ gl }: { gl: boolean }) {
                   <div className="pt-6">
                     <dl>
                       {isTeam && <Fact k="Team" v={d.team_name} />}
-                      <Fact k="School" v={`${d.school}, ${d.district}`} />
+                      <Fact k={guardian ? 'School' : 'From'} v={`${d.school}, ${d.district}`} />
                       {d.members.map((m, i) => (
                         <Fact key={i} k={isTeam ? `Member ${i + 1}` : 'Name'} v={`${m.name} · ${m.grade}`} />
                       ))}
-                      <Fact k="Guardian" v={`${d.guardian_name} · ${d.guardian_phone}`} />
+                      {guardian && <Fact k="Guardian" v={`${d.guardian_name} · ${d.guardian_phone}`} />}
                     </dl>
                     {sendError && <p className="mt-4 text-[14px] text-[#ff6b6b]">{sendError}</p>}
                   </div>

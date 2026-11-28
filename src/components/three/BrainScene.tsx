@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { PerformanceMonitor } from '@react-three/drei';
 import * as THREE from 'three';
 import type { Palette } from '../../config/palettes';
 import { buildBrain, REGION_ANCHORS } from './brainGeometry';
@@ -127,7 +128,8 @@ const skyFrag = /* glsl */ `
   float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
   float n(vec2 p){ vec2 i=floor(p), f=fract(p); f=f*f*(3.0-2.0*f);
     return mix(mix(h(i),h(i+vec2(1,0)),f.x), mix(h(i+vec2(0,1)),h(i+vec2(1,1)),f.x), f.y); }
-  float fbm(vec2 p){ float v=0.0, a=0.5; for(int i=0;i<5;i++){ v+=a*n(p); p*=2.03; a*=0.5; } return v; }
+  // 3 octaves: the nebula is soft and slow, more detail only cost frames on large screens
+  float fbm(vec2 p){ float v=0.0, a=0.57; for(int i=0;i<3;i++){ v+=a*n(p); p*=2.03; a*=0.5; } return v; }
   void main() {
     vec2 uv = vUv; vec2 p = vec2(uv.x * uAspect, uv.y);
     float t = uTime * 0.02;
@@ -136,7 +138,7 @@ const skyFrag = /* glsl */ `
     vec3 col = mix(uBg, uBg2, smoothstep(0.15, 0.95, uv.y * 0.6 + c1 * 0.7));
     col += uB * pow(c1, 3.0) * 0.55;                                // violet clouds
     col += uA * pow(c2, 4.0) * 0.22 * smoothstep(0.2, 1.0, uv.x);   // cyan haze
-    col += uC * pow(fbm(p * 2.2 + 7.0 + t), 5.0) * 0.28 * (1.0 - uv.y); // magenta low glow
+    col += uC * pow(c2 * 0.55 + c1 * 0.45, 5.0) * 0.28 * (1.0 - uv.y); // low glow (reuses the two cloud layers)
     // light shafts falling from the top
     vec2 s = vec2(0.62 * uAspect, 1.25);
     vec2 d = p - s;
@@ -321,6 +323,9 @@ function Brain({ palette, tracks, active, onActive, onHold, start, lowPower, lab
   const reveal = useRef(0);
   const projColor = useMemo(() => new THREE.Color(), []);
   const tmp = useMemo(() => new THREE.Vector3(), []);
+  const centre = useMemo(() => new THREE.Vector3(), []);
+  const v1 = useMemo(() => new THREE.Vector3(), []);
+  const v2 = useMemo(() => new THREE.Vector3(), []);
   const sphere = useMemo(() => new THREE.Sphere(new THREE.Vector3(), 1.7), []);
 
   const colors = useMemo(() => {
@@ -504,7 +509,9 @@ function Brain({ palette, tracks, active, onActive, onHold, start, lowPower, lab
       tmp.set(p[0], p[1] + 0.12, p[2]);
       spin.current.localToWorld(tmp);
       // facing the camera?
-      const facing = tmp.clone().sub(spin.current.getWorldPosition(new THREE.Vector3())).normalize().dot(camera.position.clone().sub(tmp).normalize());
+      // (vectors reused every frame: no garbage, no GC stutter)
+      spin.current.getWorldPosition(centre);
+      const facing = v1.copy(tmp).sub(centre).normalize().dot(v2.copy(camera.position).sub(tmp).normalize());
       tmp.project(camera);
       const x = ((tmp.x + 1) / 2) * size.width;
       const y = ((1 - tmp.y) / 2) * size.height;
@@ -550,16 +557,19 @@ export default function BrainScene(props: Props) {
   const labels = useRef<(HTMLButtonElement | null)[]>([]);
   const { tracks, active, onActive, running, lowPower, palette } = props;
   const shown = tracks.slice(0, MAX);
+  const [dpr, setDpr] = useState(() => Math.min(window.devicePixelRatio || 1, lowPower ? 1.25 : 1.5));
   return (
     <>
       <Canvas
         frameloop={running ? 'always' : 'never'}
-        dpr={lowPower ? [1, 1.5] : [1, 1.75]}
+        dpr={dpr}
         camera={{ position: [0, 0.3, 7.4], fov: 34 }}
         gl={{ antialias: !lowPower, alpha: false, powerPreference: 'high-performance' }}
         style={{ position: 'absolute', inset: 0, touchAction: 'pan-y' }}
         onCreated={({ gl }) => gl.setClearColor(palette.bg)}
       >
+        {/* drop the resolution if the device can't keep up */}
+        <PerformanceMonitor onDecline={() => setDpr(1)} onIncline={() => setDpr(lowPower ? 1.25 : 1.5)} flipflops={3} />
         <Sky palette={palette} />
         <Stars count={lowPower ? 500 : 1400} color={palette.ink} />
         <Dust count={lowPower ? 160 : 420} color={palette.accent} />
@@ -576,11 +586,11 @@ export default function BrainScene(props: Props) {
             }}
             onClick={() => onActive(i)}
             onMouseEnter={() => onActive(i)}
-            className="pointer-events-auto absolute left-0 top-0 flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.06em] backdrop-blur-md transition-[background-color,border-color,color] duration-300"
+            className="pointer-events-auto absolute left-0 top-0 flex items-center gap-2 rounded-full border px-2.5 py-1 font-mono text-[11px] uppercase tracking-[0.06em] transition-[background-color,border-color,color] duration-300"
             style={{
               opacity: 0,
               borderColor: i === active ? t.color : 'rgba(255,255,255,0.16)',
-              background: i === active ? `color-mix(in oklab, ${t.color} 22%, rgba(6,7,26,0.55))` : 'rgba(6,7,26,0.45)',
+              background: i === active ? `color-mix(in oklab, ${t.color} 24%, color-mix(in oklab, var(--bg) 88%, transparent))` : 'color-mix(in oklab, var(--bg) 82%, transparent)',
               color: i === active ? '#fff' : 'rgba(238,241,255,0.8)',
               willChange: 'transform, opacity',
             }}

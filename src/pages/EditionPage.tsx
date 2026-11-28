@@ -27,7 +27,9 @@ export default function EditionPage() {
 
   const seoTitle = e ? `${e.title}${e.industry ? ` · ${e.industry}` : ''} | BlinkBuzz Hackathon Nepal` : 'Edition | BlinkBuzz Hackathon Nepal';
   const seoDesc = e
-    ? `BlinkBuzz Hackathon ${e.title}${e.venue ? ` at ${e.venue}` : ''}${e.starts_at ? `, ${formatDate(e.starts_at)}` : ''}. ${e.audience}. Teams of ${teamLabel(e.team_min, e.team_max)}, ${feeLabel(e.fee_npr).toLowerCase()}. One real industry problem, one day to build the answer.`
+    ? `BlinkBuzz Hackathon ${e.title}${e.venue ? ` at ${e.venue}` : ''}${e.starts_at ? `, ${formatDate(e.starts_at)}` : ''}.${
+        e.audience && !/^to be announced$/i.test(e.audience) ? ` For ${e.audience.charAt(0).toLowerCase()}${e.audience.slice(1)}.` : ''
+      }${!e.starts_at ? (e.venue ? ' Date to be announced.' : ' Date and venue to be announced.') : ''} Teams of ${teamLabel(e.team_min, e.team_max)}, ${feeLabel(e.fee_npr).toLowerCase()} entry. One real industry problem, one day to build the answer.`
     : 'A BlinkBuzz Hackathon edition in Nepal.';
   useSeo({
     title: seoTitle,

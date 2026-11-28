@@ -25,6 +25,10 @@ export type Edition = {
   timeline: TimelineItem[];
   winners: Winner[];
   is_current: boolean;
+  participant_levels?: string; // comma list shown as choices on the form, e.g. "Grade 9, Grade 10"; empty = free text
+  needs_guardian?: boolean; // ask for a parent or guardian (participants under 18)
+  start_time?: string | null; // "09:00" or "09:00:00", Nepal time; with starts_at it drives the countdown
+  show_countdown?: boolean;
 };
 
 export type SponsorTier = 'title' | 'powered' | 'gold' | 'sponsor' | 'partner' | 'community';
@@ -97,8 +101,8 @@ export type Registration = {
   school: string;
   district: string;
   members: Member[];
-  guardian_name: string;
-  guardian_phone: string;
+  guardian_name: string | null;
+  guardian_phone: string | null;
   consent: boolean;
   created_at?: string;
 };

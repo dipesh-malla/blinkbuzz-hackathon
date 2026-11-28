@@ -26,9 +26,9 @@ export default function Home() {
   useSmoothScroll();
   const { loading, error, current, faqs } = useSite();
   useSeo({
-    title: 'BlinkBuzz Hackathon Nepal | Student Hackathon for Grade 9–12 at TechSpire College',
+    title: 'BlinkBuzz Hackathon | Hackathon Series in Nepal by BlinkBuzz',
     description:
-      'BlinkBuzz Hackathon is a student hackathon series in Kathmandu, Nepal. Edition 01 at TechSpire College is free for Grade 9–12 students: teams of 2–4 solve one real industry problem in AI, FinTech, HealthTech, Robotics and more.',
+      'BlinkBuzz Hackathon is a hackathon series in Nepal. Every edition brings one real industry problem, and teams spend the day building the answer. Edition 01 is for high school students at TechSpire College, Kathmandu.',
     path: '/',
     jsonLd: {
       '@context': 'https://schema.org',

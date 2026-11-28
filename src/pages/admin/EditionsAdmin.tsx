@@ -23,6 +23,10 @@ const blank = (n: number): Partial<Edition> => ({
   timeline: [],
   winners: [],
   is_current: false,
+  participant_levels: '',
+  needs_guardian: false,
+  start_time: null,
+  show_countdown: true,
 });
 
 export default function EditionsAdmin() {
@@ -41,7 +45,7 @@ export default function EditionsAdmin() {
         await supabase!.from('editions').update({ is_current: false }).neq('id', edit.id ?? '00000000-0000-0000-0000-000000000000');
       }
       const clean = { ...edit } as Record<string, unknown>;
-      ['industry', 'problem', 'venue', 'starts_at', 'ends_at', 'registration_closes'].forEach((k) => {
+      ['industry', 'problem', 'venue', 'starts_at', 'ends_at', 'registration_closes', 'start_time'].forEach((k) => {
         if (clean[k] === '') clean[k] = null;
       });
       await saveRow('editions', clean);
@@ -85,9 +89,21 @@ export default function EditionsAdmin() {
           <F label="Industry (empty = still sealed)">
             <input className="field" value={edit.industry ?? ''} onChange={(e) => set({ industry: e.target.value })} />
           </F>
-          <F label="Who can join">
+          <F label="Who can join (shown on the site, e.g. High school students, any stream)">
             <input className="field" value={edit.audience ?? ''} onChange={(e) => set({ audience: e.target.value })} />
           </F>
+          <F label="Form choices for level (comma separated; empty = people type their own)">
+            <input
+              className="field"
+              placeholder="e.g. Grade 9, Grade 10, Grade 11, Grade 12  or  Year 1, Year 2, Year 3, Year 4"
+              value={edit.participant_levels ?? ''}
+              onChange={(e) => set({ participant_levels: e.target.value })}
+            />
+          </F>
+          <label className="flex items-center gap-3 rounded-xl border border-line p-3 text-[14px]">
+            <input type="checkbox" className="h-5 w-5 accent-[var(--accent)]" checked={!!edit.needs_guardian} onChange={(e) => set({ needs_guardian: e.target.checked })} />
+            Participants may be under 18: ask for a parent or guardian on the form
+          </label>
           <F label="Problem statement (empty = encrypted until reveal)" wide>
             <textarea className="field" rows={4} value={edit.problem ?? ''} onChange={(e) => set({ problem: e.target.value })} />
           </F>
@@ -97,9 +113,16 @@ export default function EditionsAdmin() {
           <F label="Registration closes">
             <input className="field" type="datetime-local" value={edit.registration_closes?.slice(0, 16) ?? ''} onChange={(e) => set({ registration_closes: e.target.value ? new Date(e.target.value).toISOString() : null })} />
           </F>
-          <F label="Starts">
+          <F label="Start date (empty = to be announced)">
             <input className="field" type="date" value={edit.starts_at ?? ''} onChange={(e) => set({ starts_at: e.target.value })} />
           </F>
+          <F label="Start time (Nepal time)">
+            <input className="field" type="time" value={edit.start_time?.slice(0, 5) ?? ''} onChange={(e) => set({ start_time: e.target.value || null })} />
+          </F>
+          <label className="flex items-center gap-3 rounded-xl border border-line p-3 text-[14px] sm:col-span-2">
+            <input type="checkbox" className="h-5 w-5 accent-[var(--accent)]" checked={edit.show_countdown ?? true} onChange={(e) => set({ show_countdown: e.target.checked })} />
+            Show a countdown on the home page once the start date is set (for the current edition)
+          </label>
           <F label="Ends">
             <input className="field" type="date" value={edit.ends_at ?? ''} onChange={(e) => set({ ends_at: e.target.value })} />
           </F>

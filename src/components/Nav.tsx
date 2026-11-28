@@ -84,7 +84,7 @@ export default function Nav() {
     <header className="fixed inset-x-0 top-0 z-50">
       <div
         className={`absolute inset-0 transition-[background-color,border-color,backdrop-filter] duration-300 ${
-          solid || open ? 'border-b border-line bg-bg/70 backdrop-blur-xl' : 'border-b border-transparent'
+          solid || open ? 'border-b border-line bg-[color-mix(in_oklab,var(--bg)_94%,transparent)]' : 'border-b border-transparent'
         }`}
         aria-hidden
       />
@@ -129,7 +129,7 @@ export default function Nav() {
 
       <div
         id="mobile-menu"
-        className={`fixed inset-x-0 bottom-0 top-[var(--nav-h)] bg-bg/95 backdrop-blur-xl transition-[opacity,visibility] duration-300 xl:hidden ${
+        className={`fixed inset-x-0 bottom-0 top-[var(--nav-h)] bg-bg transition-[opacity,visibility] duration-300 xl:hidden ${
           open ? 'visible opacity-100' : 'invisible opacity-0'
         }`}
       >

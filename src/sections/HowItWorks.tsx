@@ -14,7 +14,7 @@ export default function HowItWorks(_props: { gl?: boolean }) {
   const steps = [
     {
       title: 'Register your team',
-      text: `Teams of ${team} sign up here. Entry is ${fee.toLowerCase() === 'free' ? 'free' : fee}, and a guardian signs off for students under 18.`,
+      text: `Teams of ${team} sign up here. Entry is ${fee.toLowerCase() === 'free' ? 'free' : fee}, ${current?.needs_guardian ? ', and a guardian signs off for anyone under 18' : ''}.`,
       kind: 'register' as StepKind,
     },
     {

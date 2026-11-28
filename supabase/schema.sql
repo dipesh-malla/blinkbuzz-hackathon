@@ -176,7 +176,7 @@ on conflict (key) do nothing;
 
 insert into public.faqs (question, answer, sort)
 select * from (values
-  ('Who can take part?', 'Edition 01 is for students in Grade 9 to 12, from any stream. Later editions open to bachelor students, each with its own industry problem.', 1),
+  ('Who can take part?', 'Each edition sets its own audience. Edition 01 is for high school students from any stream; later editions can open to university students and young professionals, each with its own industry problem.', 1),
   ('Do I need to know how to code?', 'One person on the team who can build is enough. Research, design and the final pitch matter as much as the code.', 2),
   ('How big is a team?', 'Team size is shown in the edition details and on the form. You can register as a team, and we help solo students find one.', 3),
   ('When do we see the problem?', 'The industry and the problem statement are revealed on the date in the timeline, so every team starts from the same point.', 4),
@@ -235,3 +235,13 @@ create policy "admin all" on public.private_settings for all to authenticated
 -- Sponsor extras: optional category ("Food & Beverage" → "Food & Beverage sponsor") and logo plate colour.
 alter table public.sponsors add column if not exists category text check (category is null or char_length(category) <= 40);
 alter table public.sponsors add column if not exists logo_bg text not null default 'light' check (logo_bg in ('light','dark','none'));
+
+-- Each edition decides who can join: level choices on the form and whether a guardian is needed.
+alter table public.editions add column if not exists participant_levels text not null default '';
+alter table public.editions add column if not exists needs_guardian boolean not null default false;
+alter table public.registrations alter column guardian_name drop not null;
+alter table public.registrations alter column guardian_phone drop not null;
+
+-- Start time (Nepal time) for the countdown, and a switch to hide it.
+alter table public.editions add column if not exists start_time time;
+alter table public.editions add column if not exists show_countdown boolean not null default true;

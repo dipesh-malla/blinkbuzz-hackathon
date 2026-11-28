@@ -11,7 +11,9 @@ export const demoEditions: Edition[] = [
     title: 'Edition 01',
     industry: null,
     problem: null,
-    audience: 'School and +2 students (Grade 9 to 12), any stream',
+    audience: 'High school students, any stream',
+    participant_levels: 'Grade 9, Grade 10, Grade 11, Grade 12',
+    needs_guardian: true,
     venue: 'TechSpire College, Kathmandu',
     starts_at: null,
     ends_at: null,
@@ -104,7 +106,7 @@ export const demoFaqs: Faq[] = [
     id: 'f1',
     question: 'Who can take part?',
     answer:
-      'Edition 01 is for students in Grade 9 to 12, from any stream. Later editions open to bachelor students, each with its own industry problem.',
+      'Each edition sets its own audience. Edition 01 is for high school students from any stream; later editions can open to university students and young professionals, each with its own industry problem.',
     sort: 1,
   },
   {
@@ -118,7 +120,7 @@ export const demoFaqs: Faq[] = [
     id: 'f3',
     question: 'How big is a team?',
     answer:
-      'Team size is shown in the edition details above and on the form. You can register as a team, and we help solo students find one.',
+      'Team size is shown in the edition details above and on the form. You can register as a team, and we help people who come alone find one.',
     sort: 3,
   },
   {
@@ -132,14 +134,14 @@ export const demoFaqs: Faq[] = [
     id: 'f5',
     question: 'What should we bring?',
     answer:
-      'A charged laptop per team, chargers and your student ID. Food, water, power and Wi-Fi are on us.',
+      'A charged laptop per team, chargers and an ID card. Food, water, power and Wi-Fi are on us.',
     sort: 5,
   },
   {
     id: 'f6',
-    question: 'Why is a guardian contact needed?',
+    question: 'Why do some editions ask for a guardian?',
     answer:
-      'Most school and +2 students are under 18, so we ask for a parent or guardian who agrees to your participation and can be reached on the day.',
+      'Editions for school students include participants under 18, so we ask for a parent or guardian who agrees to your participation and can be reached on the day.',
     sort: 6,
   },
 ];

@@ -15,7 +15,7 @@ const html = readFileSync('dist/index.html', 'utf8');
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 let editions = [
-  { slug: 'edition-01', title: 'Edition 01', venue: 'TechSpire College, Kathmandu', audience: 'School and +2 students (Grade 9 to 12), any stream', status: 'upcoming' },
+  { slug: 'edition-01', title: 'Edition 01', venue: 'TechSpire College, Kathmandu', audience: 'High school students, any stream', status: 'upcoming' },
   { slug: 'edition-02', title: 'Edition 02', venue: null, audience: 'To be announced', status: 'planned' },
   { slug: 'edition-03', title: 'Edition 03', venue: null, audience: 'To be announced', status: 'planned' },
 ];
@@ -58,7 +58,9 @@ for (const e of editions) {
   if (!e.slug || !/^[a-z0-9-]+$/i.test(e.slug)) continue;
   const name = `${e.title}${e.industry ? ` · ${e.industry}` : ''}`;
   const when = e.starts_at ? `, ${new Date(e.starts_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}` : '';
-  const description = `BlinkBuzz Hackathon ${name}${e.venue ? ` at ${e.venue}` : ''}${when}. ${e.audience}. One real industry problem, one day to build the answer.`;
+  const who = e.audience && !/^to be announced$/i.test(e.audience) ? ` For ${e.audience.charAt(0).toLowerCase()}${e.audience.slice(1)}.` : '';
+  const tba = !e.venue && !e.starts_at ? ' Date and venue to be announced.' : !e.starts_at ? ' Date to be announced.' : '';
+  const description = `BlinkBuzz Hackathon ${name}${e.venue ? ` at ${e.venue}` : ''}${when}.${who}${tba} One real industry problem, one day to build the answer.`;
   const path = `/edition/${e.slug}/`; // GitHub Pages serves folders with a trailing slash
   mkdirSync(`dist/edition/${e.slug}`, { recursive: true });
   writeFileSync(`dist/edition/${e.slug}/index.html`, page({ title: `${name} | BlinkBuzz Hackathon Nepal`, description, path }));
